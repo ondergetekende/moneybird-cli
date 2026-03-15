@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moneybird-cli"
+version = "0.1.0"
+description = "Command-line interface for the Moneybird API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "click>=8.1",
+    "requests>=2.31",
+    "tabulate>=0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "responses>=0.23",
+]
+
+[project.scripts]
+moneybird = "moneybird_cli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
