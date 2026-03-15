@@ -48,3 +48,22 @@ def logout(ctx: Context) -> None:
     save_config(config, ctx.config_path)
     if not ctx.quiet:
         click.echo(f"Logged out of administration '{name}'.")
+
+
+@click.command(name="default")
+@click.argument("name")
+@pass_context
+def set_default(ctx: Context, name: str) -> None:
+    """Set the default administration.
+
+    NAME is the administration name as used during login.
+    """
+    config = load_config(ctx.config_path)
+    admins = config.get("administrations", {})
+    if name not in admins:
+        available = ", ".join(sorted(admins)) if admins else "(none)"
+        raise click.ClickException(f"Unknown administration '{name}'. Available: {available}")
+    config["default_administration"] = name
+    save_config(config, ctx.config_path)
+    if not ctx.quiet:
+        click.echo(f"Default administration set to '{name}'.")

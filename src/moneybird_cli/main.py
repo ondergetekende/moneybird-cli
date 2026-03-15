@@ -115,7 +115,7 @@ def cli(
 
 
 # Register command groups
-from moneybird_cli.commands.login import login, logout  # noqa: E402
+from moneybird_cli.commands.login import login, logout, set_default  # noqa: E402
 from moneybird_cli.commands.contacts import contacts  # noqa: E402
 from moneybird_cli.commands.products import products  # noqa: E402
 from moneybird_cli.commands.sales_invoices import sales_invoices  # noqa: E402
@@ -124,6 +124,7 @@ from moneybird_cli.commands.ledger_accounts import ledger_accounts  # noqa: E402
 
 cli.add_command(login)
 cli.add_command(logout)
+cli.add_command(set_default)
 cli.add_command(contacts)
 cli.add_command(products)
 cli.add_command(sales_invoices)

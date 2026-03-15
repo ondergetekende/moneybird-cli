@@ -90,3 +90,29 @@ def test_logout(cli_runner):
 
     config = load_config(cli_runner.config_path)
     assert "default" not in config.get("administrations", {})
+
+
+def test_set_default(runner, tmp_path):
+    from moneybird_cli.main import cli
+
+    config_path = tmp_path / "config.toml"
+    # Login two administrations
+    runner.invoke(cli, ["--config", str(config_path), "--administration", "company-a", "login", "--token", "t1", "--administration-id", "1"])
+    runner.invoke(cli, ["--config", str(config_path), "--administration", "company-b", "login", "--token", "t2", "--administration-id", "2"])
+
+    config = load_config(config_path)
+    assert config["default_administration"] == "company-a"
+
+    result = runner.invoke(cli, ["--config", str(config_path), "default", "company-b"])
+    assert result.exit_code == 0
+    assert "company-b" in result.output
+
+    config = load_config(config_path)
+    assert config["default_administration"] == "company-b"
+
+
+def test_set_default_unknown(cli_runner):
+    cli_runner("login", "--token", "tok", "--administration-id", "123")
+    result = cli_runner("default", "nonexistent")
+    assert result.exit_code != 0
+    assert "Unknown administration" in result.output
