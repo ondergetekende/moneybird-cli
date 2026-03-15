@@ -97,6 +97,26 @@ class MoneybirdClient:
     def get(self, path: str, params: dict | None = None) -> Any:
         return self._request("GET", path, params=params)
 
+    @staticmethod
+    def list_administrations(token: str) -> list[dict]:
+        """List all administrations accessible with the given token."""
+        url = f"{API_BASE}/administrations.json"
+        response = requests.get(
+            url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        if response.status_code >= 400:
+            try:
+                body = response.json()
+                message = body.get("error", body.get("message", response.text))
+            except (ValueError, KeyError):
+                message = response.text
+            raise MoneybirdApiError(response.status_code, message)
+        return response.json()
+
     def get_all(
         self, path: str, params: dict | None = None, per_page: int = 100
     ) -> list[dict]:

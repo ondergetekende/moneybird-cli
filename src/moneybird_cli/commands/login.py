@@ -6,16 +6,30 @@ from pathlib import Path
 
 import click
 
+from moneybird_cli.client import MoneybirdClient
 from moneybird_cli.config import load_config, save_config, set_administration, remove_administration
 from moneybird_cli.main import pass_context, Context
 
 
 @click.command()
 @click.option("--token", required=True, help="Moneybird API token.")
-@click.option("--administration-id", required=True, help="Moneybird administration ID.")
+@click.option("--administration-id", default=None, help="Moneybird administration ID. Resolved automatically if you have exactly one.")
 @pass_context
-def login(ctx: Context, token: str, administration_id: str) -> None:
+def login(ctx: Context, token: str, administration_id: str | None) -> None:
     """Log in to your Moneybird account by saving API credentials."""
+    if administration_id is None:
+        administrations = MoneybirdClient.list_administrations(token)
+        if len(administrations) == 0:
+            raise click.ClickException("No administrations found for this token.")
+        if len(administrations) > 1:
+            lines = ["Multiple administrations found. Use --administration-id to specify which one:", ""]
+            for admin in administrations:
+                lines.append(f"  {admin['id']}  {admin['name']}")
+            raise click.ClickException("\n".join(lines))
+        administration_id = str(administrations[0]["id"])
+        if not ctx.quiet:
+            click.echo(f"Auto-detected administration: {administrations[0]['name']} (ID: {administration_id})")
+
     config = load_config(ctx.config_path)
     config = set_administration(config, token, administration_id, ctx.administration_name)
     save_config(config, ctx.config_path)
