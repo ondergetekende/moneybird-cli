@@ -121,6 +121,23 @@ from moneybird_cli.commands.products import products  # noqa: E402
 from moneybird_cli.commands.sales_invoices import sales_invoices  # noqa: E402
 from moneybird_cli.commands.estimates import estimates  # noqa: E402
 from moneybird_cli.commands.ledger_accounts import ledger_accounts  # noqa: E402
+from moneybird_cli.commands.projects import projects  # noqa: E402
+from moneybird_cli.commands.time_entries import time_entries  # noqa: E402
+from moneybird_cli.commands.financial_accounts import financial_accounts  # noqa: E402
+from moneybird_cli.commands.financial_mutations import financial_mutations  # noqa: E402
+from moneybird_cli.commands.financial_statements import financial_statements  # noqa: E402
+from moneybird_cli.commands.payments import payments  # noqa: E402
+from moneybird_cli.commands.reports import reports  # noqa: E402
+from moneybird_cli.commands.documents import (  # noqa: E402
+    general_documents,
+    general_journal_documents,
+    purchase_invoices,
+    receipts,
+    typeless_documents,
+)
+from moneybird_cli.commands.external_sales_invoices import external_sales_invoices  # noqa: E402
+from moneybird_cli.commands.assets import assets  # noqa: E402
+from moneybird_cli.commands.purchase_transactions import purchase_transactions  # noqa: E402
 
 cli.add_command(login)
 cli.add_command(logout)
@@ -130,3 +147,18 @@ cli.add_command(products)
 cli.add_command(sales_invoices)
 cli.add_command(estimates)
 cli.add_command(ledger_accounts)
+cli.add_command(projects)
+cli.add_command(time_entries)
+cli.add_command(financial_accounts)
+cli.add_command(financial_mutations)
+cli.add_command(financial_statements)
+cli.add_command(payments)
+cli.add_command(reports)
+cli.add_command(general_documents)
+cli.add_command(general_journal_documents, name="journal-documents")
+cli.add_command(purchase_invoices)
+cli.add_command(receipts)
+cli.add_command(typeless_documents)
+cli.add_command(external_sales_invoices)
+cli.add_command(assets)
+cli.add_command(purchase_transactions)
