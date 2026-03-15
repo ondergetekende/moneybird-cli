@@ -2,9 +2,31 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import click
+
+
+def _default_timezone() -> str:
+    """Return the system's local IANA timezone name (e.g., Europe/Amsterdam)."""
+    import os
+    # 1. Explicit TZ env var
+    tz = os.environ.get("TZ")
+    if tz and "/" in tz:
+        return tz
+    # 2. /etc/timezone (Debian/Ubuntu)
+    try:
+        return Path("/etc/timezone").read_text().strip()
+    except OSError:
+        pass
+    # 3. /etc/localtime symlink (most Linux, macOS)
+    try:
+        return os.readlink("/etc/localtime").split("zoneinfo/")[-1]
+    except OSError:
+        pass
+    # 4. Abbreviation fallback
+    return time.tzname[0]
 
 from moneybird_cli.client import MoneybirdClient
 from moneybird_cli.config import (
@@ -23,6 +45,7 @@ class Context:
         self.output_format: str = "auto"
         self.no_color: bool = False
         self.dry_run: bool = False
+        self.timezone: str = _default_timezone()
         self.config_path: Path = DEFAULT_CONFIG_PATH
         self.administration_name: str | None = None
         self.token: str | None = None
@@ -53,6 +76,7 @@ class Context:
             administration_id=administration_id,
             dry_run=self.dry_run,
             verbose=self.verbose,
+            timezone=self.timezone,
         )
 
 
@@ -88,6 +112,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
     help="Custom config file path.",
 )
 @click.option("--dry-run", is_flag=True, help="Show actions without executing them.")
+@click.option("--timezone", "timezone", default=None, metavar="TZ", help="IANA timezone for API requests (e.g., Europe/Amsterdam). Defaults to system timezone.")
 @pass_context
 def cli(
     ctx: Context,
@@ -100,6 +125,7 @@ def cli(
     no_color: bool,
     config_path: Path | None,
     dry_run: bool,
+    timezone: str | None,
 ) -> None:
     """Moneybird CLI - interact with the Moneybird API from your terminal."""
     ctx.verbose = verbose
@@ -112,6 +138,8 @@ def cli(
     ctx.administration_id = administration_id
     if config_path:
         ctx.config_path = config_path
+    if timezone:
+        ctx.timezone = timezone
 
 
 # Register command groups

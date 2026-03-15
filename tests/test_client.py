@@ -160,6 +160,22 @@ def test_get_all_no_pause_when_remaining_high(client, monkeypatch):
 
 
 @responses.activate
+def test_timezone_header_sent():
+    client = MoneybirdClient(token="t", administration_id="123", timezone="Europe/Amsterdam")
+    responses.add(responses.GET, f"{BASE}/contacts.json", json=[])
+    client.get("contacts")
+    assert responses.calls[0].request.headers["Time-Zone"] == "Europe/Amsterdam"
+
+
+@responses.activate
+def test_no_timezone_header_when_not_set():
+    client = MoneybirdClient(token="t", administration_id="123")
+    responses.add(responses.GET, f"{BASE}/contacts.json", json=[])
+    client.get("contacts")
+    assert "Time-Zone" not in responses.calls[0].request.headers
+
+
+@responses.activate
 def test_dry_run_allows_get():
     client = MoneybirdClient(token="t", administration_id="123", dry_run=True)
     responses.add(

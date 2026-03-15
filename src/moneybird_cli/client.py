@@ -31,6 +31,7 @@ class MoneybirdClient:
         administration_id: str,
         dry_run: bool = False,
         verbose: bool = False,
+        timezone: str | None = None,
     ) -> None:
         self.token = token
         self.administration_id = administration_id
@@ -38,13 +39,14 @@ class MoneybirdClient:
         self.verbose = verbose
         self.base_url = f"{API_BASE}/{administration_id}"
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            }
-        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if timezone:
+            headers["Time-Zone"] = timezone
+        self.session.headers.update(headers)
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path}.json"
