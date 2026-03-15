@@ -18,15 +18,21 @@ def purchase_transactions() -> None:
 @purchase_transactions.command("list")
 @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
 @click.option("--state", type=click.Choice(["all", "open", "pending_payment", "paid", "cancelled"]), default=None, help="Filter by state.")
+@click.option("--period", help="Filter by period (e.g., this_month, prev_year, 202401..202412).")
 @click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_purchase_transactions(ctx: Context, fetch_all: bool, state: str | None, page: int | None, per_page: int | None) -> None:
+def list_purchase_transactions(ctx: Context, fetch_all: bool, state: str | None, period: str | None, page: int | None, per_page: int | None) -> None:
     """List purchase transactions. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
+    filters = []
     if state:
-        params["filter"] = f"state:{state}"
+        filters.append(f"state:{state}")
+    if period:
+        filters.append(f"period:{period}")
+    if filters:
+        params["filter"] = ",".join(filters)
     if fetch_all:
         data = client.get_all("purchase_transactions", params=params, per_page=per_page or 100)
     else:

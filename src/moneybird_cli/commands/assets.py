@@ -17,13 +17,19 @@ def assets() -> None:
 
 @assets.command("list")
 @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+@click.option("--include-inactive", is_flag=True, help="Include inactive assets.")
+@click.option("--ledger-account-id", help="Filter by ledger account ID.")
 @click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_assets(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
+def list_assets(ctx: Context, fetch_all: bool, include_inactive: bool, ledger_account_id: str | None, page: int | None, per_page: int | None) -> None:
     """List assets. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
+    if include_inactive:
+        params["active"] = "false"
+    if ledger_account_id:
+        params["ledger_account_id"] = ledger_account_id
     if fetch_all:
         data = client.get_all("assets", params=params, per_page=per_page or 100)
     else:

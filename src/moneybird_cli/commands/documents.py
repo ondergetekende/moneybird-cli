@@ -13,13 +13,16 @@ from moneybird_cli.output import echo_output
 def _list_cmd(api_path: str, list_columns: list[str]) -> Callable:
     @click.command("list")
     @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+    @click.option("--period", help="Filter by period (e.g., this_month, prev_year, 202401..202412).")
     @click.option("--page", type=int, default=None, help="Page number (default: 1).")
     @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
     @pass_context
-    def cmd(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
+    def cmd(ctx: Context, fetch_all: bool, period: str | None, page: int | None, per_page: int | None) -> None:
         """List documents. Returns the first page by default; use --all to fetch everything."""
         client = ctx.get_client()
         params: dict = {}
+        if period:
+            params["filter"] = f"period:{period}"
         if fetch_all:
             data = client.get_all(api_path, params=params, per_page=per_page or 100)
         else:

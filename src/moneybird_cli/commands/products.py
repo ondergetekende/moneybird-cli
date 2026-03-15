@@ -18,15 +18,18 @@ def products() -> None:
 @products.command("list")
 @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
 @click.option("--query", help="Filter by product name.")
+@click.option("--currency", help="Filter by currency code (e.g., EUR, USD).")
 @click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_products(ctx: Context, fetch_all: bool, query: str | None, page: int | None, per_page: int | None) -> None:
+def list_products(ctx: Context, fetch_all: bool, query: str | None, currency: str | None, page: int | None, per_page: int | None) -> None:
     """List products. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
     if query:
         params["query"] = query
+    if currency:
+        params["currency"] = currency
     if fetch_all:
         data = client.get_all("products", params=params, per_page=per_page or 100)
     else:

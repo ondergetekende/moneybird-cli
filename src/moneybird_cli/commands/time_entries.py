@@ -17,13 +17,31 @@ def time_entries() -> None:
 
 @time_entries.command("list")
 @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+@click.option("--state", help="Filter by state (all, open, non_billable).")
+@click.option("--period", help="Filter by period (e.g., this_month, prev_year, 202401..202412).")
+@click.option("--contact-id", help="Filter by contact ID.")
+@click.option("--project-id", help="Filter by project ID.")
+@click.option("--user-id", help="Filter by user ID.")
 @click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_time_entries(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
+def list_time_entries(ctx: Context, fetch_all: bool, state: str | None, period: str | None, contact_id: str | None, project_id: str | None, user_id: str | None, page: int | None, per_page: int | None) -> None:
     """List time entries. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
+    filters = []
+    if state:
+        filters.append(f"state:{state}")
+    if period:
+        filters.append(f"period:{period}")
+    if contact_id:
+        filters.append(f"contact_id:{contact_id}")
+    if project_id:
+        filters.append(f"project_id:{project_id}")
+    if user_id:
+        filters.append(f"user_id:{user_id}")
+    if filters:
+        params["filter"] = ",".join(filters)
     if fetch_all:
         data = client.get_all("time_entries", params=params, per_page=per_page or 100)
     else:

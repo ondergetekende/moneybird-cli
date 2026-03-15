@@ -24,13 +24,25 @@ def estimates() -> None:
 
 @estimates.command("list")
 @click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+@click.option("--state", help="Filter by state (draft, open, late, accepted, rejected, billed, archived).")
+@click.option("--period", help="Filter by period (e.g., this_month, prev_year, 202401..202412).")
+@click.option("--contact-id", help="Filter by contact ID.")
 @click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_estimates(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
+def list_estimates(ctx: Context, fetch_all: bool, state: str | None, period: str | None, contact_id: str | None, page: int | None, per_page: int | None) -> None:
     """List estimates. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
+    filters = []
+    if state:
+        filters.append(f"state:{state}")
+    if period:
+        filters.append(f"period:{period}")
+    if contact_id:
+        filters.append(f"contact_id:{contact_id}")
+    if filters:
+        params["filter"] = ",".join(filters)
     if fetch_all:
         data = client.get_all("estimates", params=params, per_page=per_page or 100)
     else:
