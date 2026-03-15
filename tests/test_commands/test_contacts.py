@@ -17,6 +17,28 @@ def test_list_contacts(logged_in_runner):
     result = logged_in_runner("contacts", "list")
     assert result.exit_code == 0
     assert "Acme" in result.output
+    # Default is single page
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_list_contacts_all(logged_in_runner):
+    # Page 1: full page
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": str(i), "company_name": f"Co{i}", "firstname": "", "lastname": "", "email": ""} for i in range(100)],
+    )
+    # Page 2: partial (end)
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": "100", "company_name": "Last", "firstname": "", "lastname": "", "email": ""}],
+    )
+    result = logged_in_runner("contacts", "list", "--all")
+    assert result.exit_code == 0
+    assert "Last" in result.output
+    assert len(responses.calls) == 2
 
 
 @responses.activate

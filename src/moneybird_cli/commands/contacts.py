@@ -16,23 +16,24 @@ def contacts() -> None:
 
 
 @contacts.command("list")
-@click.option("--page", type=int, default=None, help="Page number.")
+@click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+@click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @click.option("--include-archived", is_flag=True, help="Include archived contacts.")
 @pass_context
-def list_contacts(ctx: Context, page: int | None, per_page: int | None, include_archived: bool) -> None:
-    """List all contacts."""
+def list_contacts(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None, include_archived: bool) -> None:
+    """List contacts. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
     if include_archived:
         params["include_archived"] = "true"
-    if page is not None:
-        params["page"] = page
+    if fetch_all:
+        data = client.get_all("contacts", params=params, per_page=per_page or 100)
+    else:
+        params["page"] = page or 1
         if per_page:
             params["per_page"] = per_page
         data = client.get("contacts", params=params)
-    else:
-        data = client.get_all("contacts", params=params, per_page=per_page or 100)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 
 

@@ -16,20 +16,21 @@ def ledger_accounts() -> None:
 
 
 @ledger_accounts.command("list")
-@click.option("--page", type=int, default=None, help="Page number.")
+@click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
+@click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_ledger_accounts(ctx: Context, page: int | None, per_page: int | None) -> None:
-    """List all ledger accounts."""
+def list_ledger_accounts(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
+    """List ledger accounts. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
-    if page is not None:
-        params["page"] = page
+    if fetch_all:
+        data = client.get_all("ledger_accounts", params=params, per_page=per_page or 100)
+    else:
+        params["page"] = page or 1
         if per_page:
             params["per_page"] = per_page
         data = client.get("ledger_accounts", params=params)
-    else:
-        data = client.get_all("ledger_accounts", params=params, per_page=per_page or 100)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 
 

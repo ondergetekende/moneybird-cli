@@ -25,32 +25,34 @@ def sales_invoices() -> None:
 
 
 @sales_invoices.command("list")
+@click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
 @click.option("--state", help="Filter by state (draft, open, paid, etc.).")
 @click.option("--contact-id", help="Filter by contact ID.")
-@click.option("--page", type=int, default=None, help="Page number.")
+@click.option("--page", type=int, default=None, help="Page number (default: 1).")
 @click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
 def list_invoices(
     ctx: Context,
+    fetch_all: bool,
     state: str | None,
     contact_id: str | None,
     page: int | None,
     per_page: int | None,
 ) -> None:
-    """List all sales invoices."""
+    """List sales invoices. Returns the first page by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
     if state:
         params["filter"] = f"state:{state}"
     if contact_id:
         params["filter"] = f"contact_id:{contact_id}"
-    if page is not None:
-        params["page"] = page
+    if fetch_all:
+        data = client.get_all("sales_invoices", params=params, per_page=per_page or 100)
+    else:
+        params["page"] = page or 1
         if per_page:
             params["per_page"] = per_page
         data = client.get("sales_invoices", params=params)
-    else:
-        data = client.get_all("sales_invoices", params=params, per_page=per_page or 100)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 
 

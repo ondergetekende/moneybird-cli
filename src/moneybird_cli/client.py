@@ -49,18 +49,17 @@ class MoneybirdClient:
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path}.json"
 
-    def _handle_response(self, response: requests.Response) -> Any:
+    def _handle_response(self, response: requests.Response) -> tuple[Any, requests.Response]:
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))
             logger.warning("Rate limited. Retrying after %d seconds.", retry_after)
             time.sleep(retry_after)
-            # Retry the same request
             return self._handle_response(
                 self.session.send(response.request)  # type: ignore[arg-type]
             )
 
         if response.status_code == 204:
-            return None
+            return None, response
 
         if response.status_code >= 400:
             try:
@@ -71,8 +70,8 @@ class MoneybirdClient:
             raise MoneybirdApiError(response.status_code, message)
 
         if not response.content:
-            return None
-        return response.json()
+            return None, response
+        return response.json(), response
 
     def _request(
         self,
@@ -92,7 +91,32 @@ class MoneybirdClient:
             return None
 
         response = self.session.request(method, url, params=params, json=json)
+        data, _ = self._handle_response(response)
+        return data
+
+    def _request_with_headers(
+        self,
+        method: str,
+        path: str,
+        params: dict | None = None,
+    ) -> tuple[Any, requests.Response]:
+        """Like _request, but also returns the response for header inspection."""
+        url = self._url(path)
+        if self.verbose:
+            click.echo(f"{method.upper()} {url}", err=True)
+
+        response = self.session.request(method, url, params=params)
         return self._handle_response(response)
+
+    @staticmethod
+    def _respect_rate_limit(response: requests.Response, verbose: bool = False) -> None:
+        """Sleep if rate limit is nearly exhausted."""
+        remaining = response.headers.get("RateLimit-Remaining")
+        if remaining is not None and int(remaining) <= 1:
+            reset = int(response.headers.get("RateLimit-Reset", "60"))
+            if verbose:
+                click.echo(f"Rate limit nearly exhausted, waiting {reset}s.", err=True)
+            time.sleep(reset)
 
     def get(self, path: str, params: dict | None = None) -> Any:
         return self._request("GET", path, params=params)
@@ -120,19 +144,23 @@ class MoneybirdClient:
     def get_all(
         self, path: str, params: dict | None = None, per_page: int = 100
     ) -> list[dict]:
-        """GET with automatic pagination. Returns all results."""
+        """GET with automatic pagination. Returns all results.
+
+        Respects rate limit headers: pauses when RateLimit-Remaining is low.
+        """
         params = dict(params or {})
         params["per_page"] = per_page
         page = 1
         results: list[dict] = []
         while True:
             params["page"] = page
-            data = self._request("GET", path, params=params)
+            data, response = self._request_with_headers("GET", path, params=params)
             if not data:
                 break
             results.extend(data)
             if len(data) < per_page:
                 break
+            self._respect_rate_limit(response, verbose=self.verbose)
             page += 1
         return results
 

@@ -115,6 +115,51 @@ def test_dry_run_skips_writes():
 
 
 @responses.activate
+def test_get_all_respects_rate_limit(client, monkeypatch):
+    """When RateLimit-Remaining hits 1, get_all pauses before the next request."""
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", lambda s: slept.append(s))
+
+    # Page 1: full page, rate limit nearly exhausted
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": str(i)} for i in range(100)],
+        headers={"RateLimit-Remaining": "1", "RateLimit-Reset": "5"},
+    )
+    # Page 2: partial page
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": "100"}],
+    )
+    result = client.get_all("contacts")
+    assert len(result) == 101
+    assert slept == [5]
+
+
+@responses.activate
+def test_get_all_no_pause_when_remaining_high(client, monkeypatch):
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", lambda s: slept.append(s))
+
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": str(i)} for i in range(100)],
+        headers={"RateLimit-Remaining": "50", "RateLimit-Reset": "300"},
+    )
+    responses.add(
+        responses.GET,
+        f"{BASE}/contacts.json",
+        json=[{"id": "100"}],
+    )
+    result = client.get_all("contacts")
+    assert len(result) == 101
+    assert slept == []
+
+
+@responses.activate
 def test_dry_run_allows_get():
     client = MoneybirdClient(token="t", administration_id="123", dry_run=True)
     responses.add(
