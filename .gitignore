@@ -1,2 +1,5 @@
 **/__pycache__
-src/moneybird_cli.egg-info
+*.egg-info
+dist/
+build/
+.venv/

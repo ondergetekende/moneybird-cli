@@ -2,6 +2,8 @@
 
 This is a command-line interface (CLI) for interacting with the Moneybird API. It allows you to perform various operations such as creating invoices, managing contacts, and more, directly from your terminal.
 
+> **Disclaimer:** This project is not affiliated with, endorsed by, or in any way associated with Moneybird B.V. "Moneybird" is a trademark of Moneybird B.V. This is an independent, open-source tool that uses the public Moneybird API.
+
 ## Account setup
 
 To use the Moneybird CLI, you need to set up your account and obtain an API token. Follow these steps:
@@ -104,6 +106,111 @@ The Moneybird CLI supports several global options that can be used with any comm
 - `moneybird ledger-accounts create --name NAME --account-type TYPE`: Create a ledger account.
 - `moneybird ledger-accounts update <ID> [--name ...]`: Update a ledger account.
 - `moneybird ledger-accounts delete <ID>`: Delete a ledger account.
+
+### Projects
+
+- `moneybird projects list [--all] [--state active|archived|all]`: List projects.
+- `moneybird projects get <ID>`: Get a single project.
+- `moneybird projects create --name NAME [--budget ...]`: Create a project.
+- `moneybird projects update <ID> [--name ...]`: Update a project.
+- `moneybird projects delete <ID>`: Delete a project.
+
+### Time Entries
+
+- `moneybird time-entries list [--all] [--state STATE] [--period PERIOD] [--project-id ID]`: List time entries.
+- `moneybird time-entries get <ID>`: Get a single time entry.
+- `moneybird time-entries create --started-at TIME --ended-at TIME [--description ...]`: Create a time entry.
+- `moneybird time-entries update <ID> [--description ...]`: Update a time entry.
+- `moneybird time-entries delete <ID>`: Delete a time entry.
+
+### Recurring Sales Invoices
+
+- `moneybird recurring-sales-invoices list [--all]`: List recurring invoices.
+- `moneybird recurring-sales-invoices get <ID>`: Get a single recurring invoice.
+- `moneybird recurring-sales-invoices create --contact-id ID --frequency-type TYPE --frequency N`: Create a recurring invoice.
+- `moneybird recurring-sales-invoices update <ID> [--frequency ...]`: Update a recurring invoice.
+- `moneybird recurring-sales-invoices delete <ID>`: Delete a recurring invoice.
+
+### Subscriptions
+
+- `moneybird subscriptions list [--all]`: List subscriptions.
+- `moneybird subscriptions get <ID>`: Get a single subscription.
+- `moneybird subscriptions create --contact-id ID [--product-id ID ...]`: Create a subscription.
+- `moneybird subscriptions update <ID> [--product-id ...]`: Update a subscription.
+- `moneybird subscriptions cancel <ID>`: Cancel a subscription.
+
+### Financial Accounts
+
+- `moneybird financial-accounts list`: List all financial accounts (bank accounts, credit cards, etc.).
+
+### Financial Mutations
+
+- `moneybird financial-mutations list [--all] [--state STATE] [--period PERIOD] [--mutation-type TYPE]`: List financial mutations.
+- `moneybird financial-mutations get <ID>`: Get a single financial mutation.
+- `moneybird financial-mutations link <ID> --booking-type TYPE --booking-id ID`: Link a mutation to a booking.
+- `moneybird financial-mutations unlink <ID> --booking-type TYPE --booking-id ID`: Unlink a booking.
+
+### Financial Statements
+
+- `moneybird financial-statements create --financial-account-id ID --reference REF`: Create a financial statement.
+- `moneybird financial-statements update <ID> [--reference ...]`: Update a financial statement.
+- `moneybird financial-statements delete <ID>`: Delete a financial statement.
+
+### Documents
+
+General documents, journal documents, purchase invoices, receipts, and typeless documents all share the same command structure:
+
+- `moneybird <type> list [--all] [--period PERIOD]`: List documents.
+- `moneybird <type> get <ID>`: Get a single document.
+- `moneybird <type> create [--contact-id ID] [--reference ...]`: Create a document.
+- `moneybird <type> update <ID> [--reference ...]`: Update a document.
+- `moneybird <type> delete <ID>`: Delete a document.
+
+Where `<type>` is one of: `general-documents`, `journal-documents`, `purchase-invoices`, `receipts`, `typeless-documents`.
+
+### External Sales Invoices
+
+- `moneybird external-sales-invoices list [--all] [--state STATE] [--period PERIOD]`: List external invoices.
+- `moneybird external-sales-invoices get <ID>`: Get a single external invoice.
+- `moneybird external-sales-invoices create --contact-id ID [--reference ...]`: Create an external invoice.
+- `moneybird external-sales-invoices update <ID> [--reference ...]`: Update an external invoice.
+- `moneybird external-sales-invoices delete <ID>`: Delete an external invoice.
+
+### Assets
+
+- `moneybird assets list [--all] [--include-inactive] [--ledger-account-id ID]`: List assets.
+- `moneybird assets get <ID>`: Get a single asset.
+- `moneybird assets create --name NAME [--purchase-date DATE ...]`: Create an asset.
+- `moneybird assets update <ID> [--name ...]`: Update an asset.
+- `moneybird assets delete <ID>`: Delete an asset.
+
+### Purchase Transactions
+
+- `moneybird purchase-transactions list [--all] [--state STATE] [--period PERIOD]`: List purchase transactions.
+- `moneybird purchase-transactions get <ID>`: Get a single purchase transaction.
+- `moneybird purchase-transactions delete <ID>`: Delete a pending purchase transaction.
+
+### Tax Rates
+
+- `moneybird tax-rates list [--all]`: List tax rates.
+
+### Payments
+
+- `moneybird payments get <ID>`: Get a single payment.
+
+### Reports
+
+- `moneybird reports get <TYPE> [--period PERIOD] [--contact-id ID] [--project-id ID]`: Fetch a financial report.
+
+Available report types: `profit_loss`, `balance_sheet`, `cash_flow`, `tax`, `debtors`, `debtors_aging`, `creditors`, `general_ledger`, `journal_entries`, `revenue_by_contact`, `revenue_by_project`, `expenses_by_contact`, `expenses_by_project`, `subscriptions`, `assets`.
+
+### Webhooks
+
+- `moneybird webhooks list`: List all webhooks.
+- `moneybird webhooks create --url URL --events EVENT [--events EVENT ...]`: Create a webhook.
+- `moneybird webhooks delete <ID>`: Delete a webhook.
+- `moneybird webhooks activate <ID>`: Activate a webhook.
+- `moneybird webhooks deactivate <ID>`: Deactivate a webhook.
 
 ### Pagination
 
