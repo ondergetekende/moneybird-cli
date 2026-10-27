@@ -43,7 +43,7 @@ Invoices are created as drafts. You need at least a contact ID:
 moneybird sales-invoices create --contact-id 123456789
 ```
 
-Optional fields: `--invoice-date`, `--due-date`, `--reference`, `--currency`, `--discount`, `--workflow-id`, `--document-style-id`.
+Optional fields: `--invoice-date`, `--first-due-interval` (days until due), `--reference`, `--currency`, `--discount`, `--workflow-id`, `--document-style-id`.
 
 ### Sending an invoice
 
@@ -51,7 +51,7 @@ Sending transitions the invoice from draft to open and delivers it to the custom
 
 ```bash
 moneybird sales-invoices send 123456789
-moneybird sales-invoices send 123456789 --delivery-method Post
+moneybird sales-invoices send 123456789 --delivery-method Peppol
 moneybird sales-invoices send 123456789 --email-address override@example.com
 ```
 
@@ -105,7 +105,7 @@ moneybird recurring-sales-invoices create \
   --contact-id 123 \
   --frequency-type month \
   --frequency 1 \
-  --start-date 2024-01-01
+  --invoice-date 2024-01-01
 
 moneybird recurring-sales-invoices update 123456789 --frequency 3
 moneybird recurring-sales-invoices delete 123456789

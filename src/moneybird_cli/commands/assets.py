@@ -85,3 +85,24 @@ def delete_asset(ctx: Context, id: str) -> None:
     client.delete(f"assets/{id}")
     if not ctx.quiet:
         click.echo(f"Asset {id} deleted.")
+
+
+@assets.command("reinvestment-reserve")
+@click.argument("id")
+@click.argument("kind", type=click.Choice(["purchase", "sale"]))
+@click.option("--amount", help="Amount to book against the reinvestment reserve.")
+@click.option("--remove", is_flag=True, help="Remove the existing reinvestment reserve purchase/sale.")
+@pass_context
+def reinvestment_reserve(ctx: Context, id: str, kind: str, amount: str | None, remove: bool) -> None:
+    """Add or remove a reinvestment reserve (herinvesteringsreserve) purchase or sale on an asset."""
+    client = ctx.get_client()
+    path = f"assets/{id}/reinvestment_reserve_{kind}"
+    if remove:
+        client.delete(path)
+        if not ctx.quiet:
+            click.echo(f"Reinvestment reserve {kind} removed from asset {id}.")
+        return
+    if amount is None:
+        raise click.UsageError("--amount is required unless --remove is given.")
+    data = client.post(path, json={"amount": amount})
+    echo_output(data, fmt=ctx.output_format)

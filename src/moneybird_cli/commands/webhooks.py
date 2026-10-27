@@ -7,7 +7,7 @@ import click
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
 
-LIST_COLUMNS = ["id", "url", "events", "last_http_status", "last_http_body"]
+LIST_COLUMNS = ["id", "url", "enabled_events", "last_http_status", "last_http_body"]
 
 
 @click.group()
@@ -31,7 +31,7 @@ def list_webhooks(ctx: Context) -> None:
 def create_webhook(ctx: Context, url: str, events: tuple[str, ...]) -> None:
     """Create a new webhook."""
     client = ctx.get_client()
-    data = client.post("webhooks", json={"webhook": {"url": url, "events": list(events)}})
+    data = client.post("webhooks", json={"url": url, "enabled_events": list(events)})
     echo_output(data, fmt=ctx.output_format)
 
 

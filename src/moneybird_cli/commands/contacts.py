@@ -72,31 +72,42 @@ def filter_contacts(
 ) -> None:
     """Filter contacts by criteria."""
     client = ctx.get_client()
-    params: dict = {}
+    filters = []
     if created_after:
-        params["filter"] = f"created_after:{created_after}"
+        filters.append(f"created_after:{created_after}")
     if updated_after:
-        params["filter"] = f"updated_after:{updated_after}"
+        filters.append(f"updated_after:{updated_after}")
     if first_name:
-        params["filter"] = f"first_name:{first_name}"
+        filters.append(f"first_name:{first_name}")
     if last_name:
-        params["filter"] = f"last_name:{last_name}"
+        filters.append(f"last_name:{last_name}")
+    params = {"filter": ",".join(filters)} if filters else {}
     data = client.get_all("contacts/filter", params=params)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
+
+
+@contacts.command("doubles")
+@click.option("--page", type=int, default=None, help="Page number (default: 1).")
+@pass_context
+def contact_doubles(ctx: Context, page: int | None) -> None:
+    """List groups of possible duplicate contacts."""
+    client = ctx.get_client()
+    data = client.get("contacts/doubles", params={"page": page or 1})
+    echo_output(data, fmt=ctx.output_format)
 
 
 @contacts.command("create")
 @click.option("--company-name", help="Company name.")
 @click.option("--firstname", help="First name.")
 @click.option("--lastname", help="Last name.")
-@click.option("--email", help="Email address.")
+@click.option("--email", help="Email address invoices are sent to.")
 @click.option("--phone", help="Phone number.")
 @click.option("--address1", help="Address line 1.")
 @click.option("--address2", help="Address line 2.")
 @click.option("--zipcode", help="Zip code.")
 @click.option("--city", help="City.")
 @click.option("--country", help="Country code (e.g., NL).")
-@click.option("--delivery-method", type=click.Choice(["Email", "Simplerinvoicing", "Post", "Manual"]), help="Invoice delivery method.")
+@click.option("--delivery-method", type=click.Choice(["Email", "Peppol", "Post", "Manual"]), help="Invoice delivery method.")
 @pass_context
 def create_contact(ctx: Context, **kwargs: str | None) -> None:
     """Create a new contact."""
@@ -108,6 +119,7 @@ def create_contact(ctx: Context, **kwargs: str | None) -> None:
         "address1": "address1",
         "address2": "address2",
         "deliverymethod": "delivery_method",
+        "email": "send_invoices_to_email",
     }
     api_contact = {}
     for k, v in contact.items():
@@ -121,14 +133,14 @@ def create_contact(ctx: Context, **kwargs: str | None) -> None:
 @click.option("--company-name", help="Company name.")
 @click.option("--firstname", help="First name.")
 @click.option("--lastname", help="Last name.")
-@click.option("--email", help="Email address.")
+@click.option("--email", help="Email address invoices are sent to.")
 @click.option("--phone", help="Phone number.")
 @pass_context
 def update_contact(ctx: Context, id: str, **kwargs: str | None) -> None:
     """Update a contact by ID."""
     client = ctx.get_client()
     contact = {k: v for k, v in kwargs.items() if v is not None}
-    field_map = {"company_name": "company_name"}
+    field_map = {"email": "send_invoices_to_email"}
     api_contact = {}
     for k, v in contact.items():
         api_contact[field_map.get(k, k)] = v

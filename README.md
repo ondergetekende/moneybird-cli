@@ -27,7 +27,7 @@ See [Getting Started](docs/getting-started.md) for full setup instructions, outp
 | [Documents](docs/documents.md) | Purchase invoices, receipts, journal entries, general documents, assets |
 | [Time Tracking](docs/time-tracking.md) | Projects and time entries |
 | [Reports](docs/reports.md) | Profit/loss, balance sheet, cash flow, tax, debtors/creditors, and more |
-| [Settings](docs/settings.md) | Ledger accounts, tax rates, webhooks |
+| [Settings](docs/settings.md) | Ledger accounts, tax rates, webhooks, task lists |
 
 ## Tech stack
 

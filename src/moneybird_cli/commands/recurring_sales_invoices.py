@@ -48,9 +48,8 @@ def get_recurring(ctx: Context, id: str) -> None:
 @click.option("--contact-id", required=True, help="Contact ID.")
 @click.option("--frequency-type", required=True, type=click.Choice(["day", "week", "month", "quarter", "year"]), help="Frequency type.")
 @click.option("--frequency", required=True, type=int, help="Frequency interval (e.g., 1 for every month).")
-@click.option("--start-date", help="Start date (YYYY-MM-DD).")
-@click.option("--invoice-date", help="Invoice date pattern.")
-@click.option("--due-date", help="Due date pattern.")
+@click.option("--invoice-date", help="Date of the first invoice (YYYY-MM-DD).")
+@click.option("--first-due-interval", type=int, help="Days until each invoice is due.")
 @click.option("--workflow-id", help="Workflow ID.")
 @click.option("--document-style-id", help="Document style ID.")
 @click.option("--currency", help="Currency code (default: EUR).")
@@ -68,7 +67,7 @@ def create_recurring(ctx: Context, **kwargs: str | int | None) -> None:
 @click.option("--contact-id", help="Contact ID.")
 @click.option("--frequency-type", type=click.Choice(["day", "week", "month", "quarter", "year"]), help="Frequency type.")
 @click.option("--frequency", type=int, help="Frequency interval.")
-@click.option("--start-date", help="Start date (YYYY-MM-DD).")
+@click.option("--invoice-date", help="Date of the next invoice (YYYY-MM-DD).")
 @click.option("--currency", help="Currency code.")
 @pass_context
 def update_recurring(ctx: Context, id: str, **kwargs: str | int | None) -> None:

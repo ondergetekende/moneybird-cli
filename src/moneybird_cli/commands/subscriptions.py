@@ -16,21 +16,12 @@ def subscriptions() -> None:
 
 
 @subscriptions.command("list")
-@click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
-@click.option("--page", type=int, default=None, help="Page number (default: 1).")
-@click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
+@click.option("--contact-id", required=True, help="Contact ID (upstream only lists per contact).")
 @pass_context
-def list_subscriptions(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
-    """List subscriptions. Returns the first page by default; use --all to fetch everything."""
+def list_subscriptions(ctx: Context, contact_id: str) -> None:
+    """List subscriptions of a contact."""
     client = ctx.get_client()
-    params: dict = {}
-    if fetch_all:
-        data = client.get_all("subscriptions", params=params, per_page=per_page or 100)
-    else:
-        params["page"] = page or 1
-        if per_page:
-            params["per_page"] = per_page
-        data = client.get("subscriptions", params=params)
+    data = client.get("subscriptions", params={"contact_id": contact_id})
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 
 
@@ -63,10 +54,8 @@ def create_subscription(ctx: Context, **kwargs: str | int | None) -> None:
 @subscriptions.command("update")
 @click.argument("id")
 @click.option("--start-date", help="Start date (YYYY-MM-DD).")
-@click.option("--end-date", help="End date (YYYY-MM-DD).")
-@click.option("--frequency-type", type=click.Choice(["day", "week", "month", "quarter", "year"]), help="Frequency type.")
-@click.option("--frequency", type=int, help="Frequency interval.")
 @click.option("--product-id", help="Product ID.")
+@click.option("--reference", help="Reference.")
 @pass_context
 def update_subscription(ctx: Context, id: str, **kwargs: str | int | None) -> None:
     """Update a subscription by ID."""

@@ -7,13 +7,15 @@ These commands deal with reference data and integrations that you typically set 
 Ledger accounts (grootboekrekeningen) are the categories in your chart of accounts. Every financial transaction is booked to one. Moneybird comes with a default set, but you can customize them.
 
 ```bash
-moneybird ledger-accounts list --all
+moneybird ledger-accounts list
 moneybird ledger-accounts get 123456789
 
-moneybird ledger-accounts create --name "Software Licenses" --account-type expenses
+moneybird ledger-accounts create --name "Software Licenses" --account-type expenses --rgs-code WMfoBelMfo
 moneybird ledger-accounts update 123456789 --name "SaaS Subscriptions"
 moneybird ledger-accounts delete 123456789
 ```
+
+`--rgs-code` (an RGS 3.5 reference code) is required when creating a ledger account. Account types: `non_current_assets`, `current_assets`, `equity`, `provisions`, `non_current_liabilities`, `current_liabilities`, `revenue`, `direct_costs`, `expenses`, `other_income_expenses`.
 
 ## Tax rates
 
@@ -53,4 +55,26 @@ You can specify `--events` multiple times to subscribe to several event types.
 moneybird webhooks activate 123456789
 moneybird webhooks deactivate 123456789
 moneybird webhooks delete 123456789
+```
+
+## Task lists
+
+Task lists are checklists (e.g., for closing a month or year). They consist of groups, which contain tasks, and can be created from reusable templates.
+
+```bash
+moneybird task-lists list
+moneybird task-lists create --name "Close Q1" --period-begin 2026-01-01 --period-end 2026-03-31
+moneybird task-lists add-group 123 --name "Bank" --report-type balance_sheet
+moneybird task-lists groups add-task 456 --name "Reconcile bank account"
+
+moneybird task-lists tasks assign 789 <USER_ID>
+moneybird task-lists tasks complete 789
+moneybird task-lists tasks reopen 789
+moneybird task-lists tasks note 789 "Waiting for statement"
+
+# Templates
+moneybird task-lists templates list
+moneybird task-lists templates create --name "Quarterly close"
+moneybird task-lists templates add-group 321 --name "VAT"
+moneybird task-lists templates instantiate 321 --period-begin 2026-04-01 --period-end 2026-06-30
 ```

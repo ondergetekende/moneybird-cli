@@ -123,6 +123,19 @@ class MoneybirdClient:
     def get(self, path: str, params: dict | None = None) -> Any:
         return self._request("GET", path, params=params)
 
+    def download(self, path: str) -> bytes:
+        """GET an endpoint that redirects (302) to a file and return its contents."""
+        url = self._url(path)
+        if self.verbose:
+            click.echo(f"GET {url}", err=True)
+        response = self.session.get(url, allow_redirects=False)
+        if response.is_redirect:
+            # Fetch without our session so the API token isn't sent to the file host.
+            response = requests.get(response.headers["Location"])
+        if response.status_code >= 400:
+            self._handle_response(response)
+        return response.content
+
     @staticmethod
     def list_administrations(token: str) -> list[dict]:
         """List all administrations accessible with the given token."""

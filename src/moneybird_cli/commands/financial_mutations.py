@@ -21,11 +21,9 @@ def financial_mutations() -> None:
 @click.option("--period", help="Filter by period (e.g., this_month, prev_year, 202401..202412).")
 @click.option("--mutation-type", help="Filter by type (all, debit, credit).")
 @click.option("--financial-account-id", help="Filter by financial account ID.")
-@click.option("--page", type=int, default=None, help="Page number (default: 1).")
-@click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_financial_mutations(ctx: Context, fetch_all: bool, state: str | None, period: str | None, mutation_type: str | None, financial_account_id: str | None, page: int | None, per_page: int | None) -> None:
-    """List financial mutations. Returns the first page by default; use --all to fetch everything."""
+def list_financial_mutations(ctx: Context, fetch_all: bool, state: str | None, period: str | None, mutation_type: str | None, financial_account_id: str | None) -> None:
+    """List financial mutations. Returns at most 100 by default; use --all to fetch everything."""
     client = ctx.get_client()
     params: dict = {}
     filters = []
@@ -40,11 +38,12 @@ def list_financial_mutations(ctx: Context, fetch_all: bool, state: str | None, p
     if filters:
         params["filter"] = ",".join(filters)
     if fetch_all:
-        data = client.get_all("financial_mutations", params=params, per_page=per_page or 100)
+        # The list endpoint is capped at 100; the synchronization API returns everything.
+        ids = [m["id"] for m in client.get("financial_mutations/synchronization", params=params) or []]
+        data = []
+        for i in range(0, len(ids), 100):
+            data += client.post("financial_mutations/synchronization", json={"ids": ids[i:i + 100]}) or []
     else:
-        params["page"] = page or 1
-        if per_page:
-            params["per_page"] = per_page
         data = client.get("financial_mutations", params=params)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 

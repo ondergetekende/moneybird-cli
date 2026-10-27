@@ -62,4 +62,8 @@ moneybird assets get 123456789
 moneybird assets create --name "MacBook Pro" --purchase-date 2024-01-15 --purchase-value 2499
 moneybird assets update 123456789 --name "MacBook Pro 16-inch"
 moneybird assets delete 123456789
+
+# Reinvestment reserve (herinvesteringsreserve)
+moneybird assets reinvestment-reserve 123456789 purchase --amount 1000
+moneybird assets reinvestment-reserve 123456789 sale --remove
 ```

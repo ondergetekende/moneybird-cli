@@ -86,7 +86,7 @@ def find_invoice(ctx: Context, invoice_id: str) -> None:
 @sales_invoices.command("create")
 @click.option("--contact-id", required=True, help="Contact ID.")
 @click.option("--invoice-date", help="Invoice date (YYYY-MM-DD).")
-@click.option("--due-date", help="Due date (YYYY-MM-DD).")
+@click.option("--first-due-interval", type=int, help="Days until the invoice is due.")
 @click.option("--reference", help="Custom reference.")
 @click.option("--currency", default="EUR", help="Currency code (default: EUR).")
 @click.option("--discount", help="Discount percentage.")
@@ -108,7 +108,7 @@ def create_invoice(ctx: Context, **kwargs: str | None) -> None:
 @click.argument("id")
 @click.option("--contact-id", help="Contact ID.")
 @click.option("--invoice-date", help="Invoice date (YYYY-MM-DD).")
-@click.option("--due-date", help="Due date (YYYY-MM-DD).")
+@click.option("--first-due-interval", type=int, help="Days until the invoice is due.")
 @click.option("--reference", help="Custom reference.")
 @click.option("--discount", help="Discount percentage.")
 @pass_context
@@ -134,7 +134,7 @@ def delete_invoice(ctx: Context, id: str) -> None:
 
 @sales_invoices.command("send")
 @click.argument("id")
-@click.option("--delivery-method", type=click.Choice(["Email", "Simplerinvoicing", "Post", "Manual"]), default="Email", help="Delivery method.")
+@click.option("--delivery-method", type=click.Choice(["Email", "Peppol", "Manual"]), default="Email", help="Delivery method.")
 @click.option("--email-address", help="Override recipient email.")
 @click.option("--email-message", help="Custom email message.")
 @pass_context
@@ -146,7 +146,7 @@ def send_invoice(ctx: Context, id: str, delivery_method: str, email_address: str
         body["email_address"] = email_address
     if email_message:
         body["email_message"] = email_message
-    data = client.patch(f"sales_invoices/{id}/sends_an_invoice", json={"sales_invoice_sending": body})
+    data = client.patch(f"sales_invoices/{id}/send_invoice", json={"sales_invoice_sending": body})
     echo_output(data, fmt=ctx.output_format)
 
 
@@ -165,7 +165,7 @@ def pay_invoice(ctx: Context, id: str, amount: str, payment_date: str, financial
     }
     if financial_account_id:
         payment["financial_account_id"] = financial_account_id
-    data = client.patch(f"sales_invoices/{id}/register_a_payment", json={"payment": payment})
+    data = client.patch(f"sales_invoices/{id}/register_payment", json={"payment": payment})
     echo_output(data, fmt=ctx.output_format)
 
 
@@ -176,19 +176,12 @@ def pay_invoice(ctx: Context, id: str, amount: str, payment_date: str, financial
 def download_pdf(ctx: Context, id: str, output_path: str | None) -> None:
     """Download a sales invoice as PDF."""
     client = ctx.get_client()
-    # The PDF endpoint returns a download URL
-    data = client.get(f"sales_invoices/{id}/download_pdf")
-    if isinstance(data, dict) and "download_url" in data:
-        import requests
-        response = requests.get(data["download_url"])
-        response.raise_for_status()
-        path = output_path or f"invoice-{id}.pdf"
-        with open(path, "wb") as f:
-            f.write(response.content)
-        if not ctx.quiet:
-            click.echo(f"PDF saved to {path}")
-    else:
-        echo_output(data, fmt=ctx.output_format)
+    content = client.download(f"sales_invoices/{id}/download_pdf")
+    path = output_path or f"invoice-{id}.pdf"
+    with open(path, "wb") as f:
+        f.write(content)
+    if not ctx.quiet:
+        click.echo(f"PDF saved to {path}")
 
 
 @sales_invoices.command("credit")

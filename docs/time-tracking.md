@@ -51,4 +51,8 @@ moneybird time-entries create \
 
 moneybird time-entries update 123456789 --description "Frontend + API work"
 moneybird time-entries delete 123456789
+
+# Timers
+moneybird time-entries stop 123456789
+moneybird time-entries resume 123456789
 ```

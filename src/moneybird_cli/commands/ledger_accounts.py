@@ -8,6 +8,18 @@ from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
 
 LIST_COLUMNS = ["id", "name", "account_type", "account_id"]
+ACCOUNT_TYPES = [
+    "non_current_assets",
+    "current_assets",
+    "equity",
+    "provisions",
+    "non_current_liabilities",
+    "current_liabilities",
+    "revenue",
+    "direct_costs",
+    "expenses",
+    "other_income_expenses",
+]
 
 
 @click.group(name="ledger-accounts")
@@ -16,21 +28,11 @@ def ledger_accounts() -> None:
 
 
 @ledger_accounts.command("list")
-@click.option("--all", "fetch_all", is_flag=True, help="Fetch all pages (respects rate limits).")
-@click.option("--page", type=int, default=None, help="Page number (default: 1).")
-@click.option("--per-page", type=int, default=None, help="Results per page (max 100).")
 @pass_context
-def list_ledger_accounts(ctx: Context, fetch_all: bool, page: int | None, per_page: int | None) -> None:
-    """List ledger accounts. Returns the first page by default; use --all to fetch everything."""
+def list_ledger_accounts(ctx: Context) -> None:
+    """List all ledger accounts."""
     client = ctx.get_client()
-    params: dict = {}
-    if fetch_all:
-        data = client.get_all("ledger_accounts", params=params, per_page=per_page or 100)
-    else:
-        params["page"] = page or 1
-        if per_page:
-            params["per_page"] = per_page
-        data = client.get("ledger_accounts", params=params)
+    data = client.get("ledger_accounts")
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)
 
 
@@ -46,21 +48,22 @@ def get_ledger_account(ctx: Context, id: str) -> None:
 
 @ledger_accounts.command("create")
 @click.option("--name", required=True, help="Account name.")
-@click.option("--account-type", required=True, help="Account type.")
+@click.option("--account-type", required=True, type=click.Choice(ACCOUNT_TYPES), help="Account type.")
+@click.option("--rgs-code", required=True, help="RGS 3.5 code (e.g., WMfoBelMfo).")
 @click.option("--parent-id", help="Parent ledger account ID.")
 @pass_context
-def create_ledger_account(ctx: Context, **kwargs: str | None) -> None:
+def create_ledger_account(ctx: Context, rgs_code: str, **kwargs: str | None) -> None:
     """Create a new ledger account."""
     client = ctx.get_client()
     account = {k: v for k, v in kwargs.items() if v is not None}
-    data = client.post("ledger_accounts", json={"ledger_account": account})
+    data = client.post("ledger_accounts", json={"ledger_account": account, "rgs_code": rgs_code})
     echo_output(data, fmt=ctx.output_format)
 
 
 @ledger_accounts.command("update")
 @click.argument("id")
 @click.option("--name", help="Account name.")
-@click.option("--account-type", help="Account type.")
+@click.option("--account-type", type=click.Choice(ACCOUNT_TYPES), help="Account type.")
 @pass_context
 def update_ledger_account(ctx: Context, id: str, **kwargs: str | None) -> None:
     """Update a ledger account by ID."""

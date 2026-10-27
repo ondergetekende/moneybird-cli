@@ -68,7 +68,7 @@ def test_delete_invoice(logged_in_runner):
 def test_send_invoice(logged_in_runner):
     responses.add(
         responses.PATCH,
-        f"{BASE}/sales_invoices/1/sends_an_invoice.json",
+        f"{BASE}/sales_invoices/1/send_invoice.json",
         json={"id": "1", "state": "open"},
     )
     result = logged_in_runner("sales-invoices", "send", "1")
@@ -79,7 +79,7 @@ def test_send_invoice(logged_in_runner):
 def test_pay_invoice(logged_in_runner):
     responses.add(
         responses.PATCH,
-        f"{BASE}/sales_invoices/1/register_a_payment.json",
+        f"{BASE}/sales_invoices/1/register_payment.json",
         json={"id": "1", "state": "paid"},
     )
     result = logged_in_runner(
@@ -97,3 +97,19 @@ def test_credit_invoice(logged_in_runner):
     )
     result = logged_in_runner("sales-invoices", "credit", "1")
     assert result.exit_code == 0
+
+
+@responses.activate
+def test_download_pdf_follows_redirect(logged_in_runner, tmp_path):
+    responses.add(
+        responses.GET,
+        f"{BASE}/sales_invoices/1/download_pdf.json",
+        status=302,
+        headers={"Location": "https://files.example.com/invoice.pdf"},
+    )
+    responses.add(responses.GET, "https://files.example.com/invoice.pdf", body=b"%PDF-1.4")
+    out = tmp_path / "inv.pdf"
+    result = logged_in_runner("sales-invoices", "pdf", "1", "--output", str(out))
+    assert result.exit_code == 0, result.output
+    assert out.read_bytes() == b"%PDF-1.4"
+    assert "Authorization" not in responses.calls[1].request.headers

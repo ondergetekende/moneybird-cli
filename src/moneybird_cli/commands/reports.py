@@ -10,11 +10,14 @@ from moneybird_cli.output import echo_output
 REPORT_TYPES = [
     "profit_loss",
     "balance_sheet",
+    "bank_balance",
     "cash_flow",
+    "working_capital",
     "tax",
     "debtors",
     "debtors_aging",
     "creditors",
+    "creditors_aging",
     "general_ledger",
     "journal_entries",
     "revenue_by_contact",
@@ -33,19 +36,34 @@ def reports() -> None:
 
 @reports.command("get")
 @click.argument("report_type", type=click.Choice(REPORT_TYPES))
-@click.option("--period", help="Period filter (e.g., this_month, prev_year, 2024).")
-@click.option("--contact-id", help="Filter by contact ID.")
-@click.option("--project-id", help="Filter by project ID.")
+@click.option("--period", help="Period (e.g., this_month, prev_year, 202401..202412).")
+@click.option("--period-until", help="End period for aging reports (e.g., this_month, 202501).")
+@click.option("--granularity", type=click.Choice(["month", "quarter", "year"]), help="Split the report into periods.")
+@click.option("--contact-id", help="Filter by contact ID (journal_entries).")
+@click.option("--project-id", help="Filter by project ID (profit_loss, journal_entries).")
+@click.option("--ledger-account-id", help="Filter by ledger account ID (journal_entries).")
+@click.option("--financial-account-id", help="Filter by financial account ID (cash_flow).")
+@click.option("--account-type", help="Filter by account type (journal_entries).")
+@click.option("--page", type=int, help="Page number (paginated reports).")
+@click.option("--per-page", type=int, help="Results per page (paginated reports).")
 @pass_context
-def get_report(ctx: Context, report_type: str, period: str | None, contact_id: str | None, project_id: str | None) -> None:
-    """Fetch a financial report by type."""
+def get_report(ctx: Context, report_type: str, **kwargs: str | int | None) -> None:
+    """Fetch a financial report by type. Not every option applies to every report."""
     client = ctx.get_client()
-    params: dict = {}
-    if period:
-        params["period"] = period
-    if contact_id:
-        params["contact_id"] = contact_id
-    if project_id:
-        params["project_id"] = project_id
+    params = {k: v for k, v in kwargs.items() if v is not None}
     data = client.get(f"reports/{report_type}", params=params)
+    echo_output(data, fmt=ctx.output_format)
+
+
+@reports.command("ledger-account")
+@click.argument("ledger_account_id")
+@click.option("--period", help="Period (e.g., this_month, prev_year, 202401..202412).")
+@click.option("--page", type=int, help="Page number.")
+@click.option("--per-page", type=int, help="Results per page.")
+@pass_context
+def get_ledger_account_report(ctx: Context, ledger_account_id: str, **kwargs: str | int | None) -> None:
+    """Fetch the report for a single ledger account."""
+    client = ctx.get_client()
+    params = {k: v for k, v in kwargs.items() if v is not None}
+    data = client.get(f"reports/ledger_accounts/{ledger_account_id}", params=params)
     echo_output(data, fmt=ctx.output_format)

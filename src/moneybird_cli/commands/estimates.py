@@ -66,7 +66,7 @@ def get_estimate(ctx: Context, id: str) -> None:
 @estimates.command("create")
 @click.option("--contact-id", required=True, help="Contact ID.")
 @click.option("--estimate-date", help="Estimate date (YYYY-MM-DD).")
-@click.option("--due-date", help="Due date (YYYY-MM-DD).")
+@click.option("--first-due-interval", type=int, help="Days until the estimate is due.")
 @click.option("--reference", help="Custom reference.")
 @click.option("--currency", default="EUR", help="Currency code (default: EUR).")
 @click.option("--discount", help="Discount percentage.")
@@ -85,7 +85,7 @@ def create_estimate(ctx: Context, **kwargs: str | None) -> None:
 @click.argument("id")
 @click.option("--contact-id", help="Contact ID.")
 @click.option("--estimate-date", help="Estimate date (YYYY-MM-DD).")
-@click.option("--due-date", help="Due date (YYYY-MM-DD).")
+@click.option("--first-due-interval", type=int, help="Days until the estimate is due.")
 @click.option("--reference", help="Custom reference.")
 @click.option("--discount", help="Discount percentage.")
 @pass_context
@@ -111,7 +111,7 @@ def delete_estimate(ctx: Context, id: str) -> None:
 
 @estimates.command("send")
 @click.argument("id")
-@click.option("--delivery-method", type=click.Choice(["Email", "Simplerinvoicing", "Post", "Manual"]), default="Email", help="Delivery method.")
+@click.option("--delivery-method", type=click.Choice(["Email", "Manual"]), default="Email", help="Delivery method.")
 @click.option("--email-address", help="Override recipient email.")
 @click.option("--email-message", help="Custom email message.")
 @pass_context
@@ -123,5 +123,5 @@ def send_estimate(ctx: Context, id: str, delivery_method: str, email_address: st
         body["email_address"] = email_address
     if email_message:
         body["email_message"] = email_message
-    data = client.patch(f"estimates/{id}/sends_an_estimate", json={"estimate_sending": body})
+    data = client.patch(f"estimates/{id}/send_estimate", json={"estimate_sending": body})
     echo_output(data, fmt=ctx.output_format)

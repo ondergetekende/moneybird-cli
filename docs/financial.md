@@ -22,6 +22,7 @@ moneybird financial-mutations list --period this_month
 moneybird financial-mutations list --state unprocessed
 moneybird financial-mutations list --mutation-type credit
 moneybird financial-mutations list --financial-account-id 123
+moneybird financial-mutations list --all --period this_year   # beyond the 100-item limit
 
 # View details
 moneybird financial-mutations get 123456789

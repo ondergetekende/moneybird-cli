@@ -38,7 +38,7 @@ Additional create/update fields: `--description`, `--currency` (default EUR), `-
 Subscriptions represent ongoing service agreements with customers. Moneybird tracks the subscription lifecycle and can automatically generate invoices based on the subscription terms.
 
 ```bash
-moneybird subscriptions list --all
+moneybird subscriptions list --contact-id 123   # Moneybird only lists per contact
 moneybird subscriptions get 123456789
 
 moneybird subscriptions create \
@@ -48,7 +48,7 @@ moneybird subscriptions create \
   --frequency 1 \
   --start-date 2024-01-01
 
-moneybird subscriptions update 123456789 --end-date 2025-01-01
+moneybird subscriptions update 123456789 --product-id 789
 moneybird subscriptions cancel 123456789
 ```
 

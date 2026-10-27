@@ -46,7 +46,13 @@ moneybird contacts create --company-name "Acme Corp" --email info@acme.com
 moneybird contacts create --firstname "Jan" --lastname "de Vries" --email jan@example.com
 ```
 
-Additional fields: `--phone`, `--address1`, `--address2`, `--zipcode`, `--city`, `--country` (two-letter code like `NL`), `--delivery-method` (`Email`, `Simplerinvoicing`, `Post`, `Manual`).
+Additional fields: `--phone`, `--address1`, `--address2`, `--zipcode`, `--city`, `--country` (two-letter code like `NL`), `--delivery-method` (`Email`, `Peppol`, `Post`, `Manual`). `--email` sets the address invoices are sent to.
+
+## Finding duplicates
+
+```bash
+moneybird contacts doubles
+```
 
 ## Updating and deleting
 

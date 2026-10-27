@@ -104,3 +104,23 @@ def delete_time_entry(ctx: Context, id: str) -> None:
     client.delete(f"time_entries/{id}")
     if not ctx.quiet:
         click.echo(f"Time entry {id} deleted.")
+
+
+@time_entries.command("stop")
+@click.argument("id")
+@pass_context
+def stop_time_entry(ctx: Context, id: str) -> None:
+    """Stop a running timer."""
+    client = ctx.get_client()
+    data = client.patch(f"time_entries/{id}/stop")
+    echo_output(data, fmt=ctx.output_format)
+
+
+@time_entries.command("resume")
+@click.argument("id")
+@pass_context
+def resume_time_entry(ctx: Context, id: str) -> None:
+    """Resume a stopped timer."""
+    client = ctx.get_client()
+    data = client.patch(f"time_entries/{id}/resume")
+    echo_output(data, fmt=ctx.output_format)
