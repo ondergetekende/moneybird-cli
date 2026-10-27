@@ -72,6 +72,12 @@ def save_config(data: dict, path: Path | None = None) -> None:
     """Save configuration to TOML file."""
     config_path = path or DEFAULT_CONFIG_PATH
     config_path.parent.mkdir(parents=True, exist_ok=True)
+    # Restrict permissions before writing the token; some filesystems don't support it.
+    config_path.touch(mode=0o600, exist_ok=True)
+    try:
+        config_path.chmod(0o600)
+    except OSError:
+        pass
     config_path.write_text(_serialize_toml(data) + "\n")
 
 

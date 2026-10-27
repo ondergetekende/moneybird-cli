@@ -23,6 +23,14 @@ def test_save_and_load_config(tmp_path):
     assert loaded["administrations"]["default"]["administration_id"] == "12345"
 
 
+def test_save_config_restricts_permissions(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text("")
+    path.chmod(0o644)
+    save_config({}, path)
+    assert path.stat().st_mode & 0o777 == 0o600
+
+
 def test_multiple_administrations(tmp_path):
     path = tmp_path / "config.toml"
     config = set_administration({}, "token-a", "111", "company-a")
