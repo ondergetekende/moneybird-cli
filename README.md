@@ -36,6 +36,16 @@ See [Getting Started](docs/getting-started.md) for full setup instructions, outp
 - [Requests](https://requests.readthedocs.io/) for HTTP
 - [Tabulate](https://pypi.org/project/tabulate/) for table formatting
 
+## Releasing
+
+Versions come from git tags (via `setuptools-scm`). Pushing a tag like `v1.2.3` runs the tests, builds, and publishes to PyPI:
+
+```bash
+git tag v1.2.3 && git push origin v1.2.3
+```
+
+Publishing uses PyPI trusted publishing: add this repository as a trusted publisher on PyPI (workflow `release.yml`, environment `pypi`).
+
 ## License
 
 MIT -- see [LICENSE](LICENSE).

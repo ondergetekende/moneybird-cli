@@ -84,7 +84,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="moneybird")
+@click.version_option(package_name="moneybird-cli", prog_name="moneybird")
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output.")
 @click.option("-q", "--quiet", is_flag=True, help="Suppress all output except errors.")
 @click.option(
