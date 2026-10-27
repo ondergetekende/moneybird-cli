@@ -6,6 +6,13 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import (
+    add_attachments,
+    add_collection_states,
+    add_notes,
+    add_payments,
+    add_sync,
+)
 
 LIST_COLUMNS = ["id", "contact_id", "reference", "date", "state", "total_price_incl_tax", "total_unpaid"]
 
@@ -97,3 +104,18 @@ def delete_external_invoice(ctx: Context, id: str) -> None:
     client.delete(f"external_sales_invoices/{id}")
     if not ctx.quiet:
         click.echo(f"External sales invoice {id} deleted.")
+
+
+@external_sales_invoices.command("create-from-file")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False))
+@pass_context
+def create_from_file(ctx: Context, file: str) -> None:
+    """Create an external sales invoice from a PDF/image file."""
+    echo_output(ctx.get_client().upload("external_sales_invoices/attachment", file), fmt=ctx.output_format)
+
+
+add_sync(external_sales_invoices, "external_sales_invoices", LIST_COLUMNS)
+add_payments(external_sales_invoices, "external_sales_invoices")
+add_notes(external_sales_invoices, "external_sales_invoices")
+add_attachments(external_sales_invoices, "external_sales_invoices", upload="attachment")
+add_collection_states(external_sales_invoices, "external_sales_invoices")

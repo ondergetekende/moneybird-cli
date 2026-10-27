@@ -6,6 +6,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import clean
 
 LIST_COLUMNS = ["id", "state", "amount", "date", "description", "sepa_iban"]
 
@@ -63,3 +64,14 @@ def delete_purchase_transaction(ctx: Context, id: str) -> None:
     client.delete(f"purchase_transactions/{id}")
     if not ctx.quiet:
         click.echo(f"Purchase transaction {id} deleted.")
+
+
+@purchase_transactions.command("upload-sepa")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False))
+@click.option("--ledger-account-id", help="Ledger account ID.")
+@click.option("--financial-account-id", help="Financial account ID.")
+@pass_context
+def upload_sepa(ctx: Context, file: str, ledger_account_id: str | None, financial_account_id: str | None) -> None:
+    """Create purchase transaction batches from a SEPA credit transfer file (pain.001)."""
+    data = clean({"ledger_account_id": ledger_account_id, "financial_account_id": financial_account_id})
+    echo_output(ctx.get_client().upload("sepa_credit_transfer", file, data=data), fmt=ctx.output_format)

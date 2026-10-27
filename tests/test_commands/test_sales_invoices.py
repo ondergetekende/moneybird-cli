@@ -78,8 +78,8 @@ def test_send_invoice(logged_in_runner):
 @responses.activate
 def test_pay_invoice(logged_in_runner):
     responses.add(
-        responses.PATCH,
-        f"{BASE}/sales_invoices/1/register_payment.json",
+        responses.POST,
+        f"{BASE}/sales_invoices/1/payments.json",
         json={"id": "1", "state": "paid"},
     )
     result = logged_in_runner(

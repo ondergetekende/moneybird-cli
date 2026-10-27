@@ -76,3 +76,11 @@ moneybird purchase-transactions delete 123456789  # only pending ones
 ```
 
 **States:** `all`, `open`, `pending_payment`, `paid`, `cancelled`.
+
+### SEPA credit transfer files
+
+Upload a SEPA credit transfer file (pain.001) to create purchase transaction batches:
+
+```bash
+moneybird purchase-transactions upload-sepa payments.xml --financial-account-id 123
+```

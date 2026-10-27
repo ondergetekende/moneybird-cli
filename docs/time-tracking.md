@@ -55,4 +55,7 @@ moneybird time-entries delete 123456789
 # Timers
 moneybird time-entries stop 123456789
 moneybird time-entries resume 123456789
+
+# Notes
+moneybird time-entries note 123456789 "Includes travel"
 ```

@@ -185,3 +185,21 @@ def test_dry_run_allows_get():
     )
     result = client.get("contacts")
     assert result == []
+
+
+@responses.activate
+def test_upload_sends_multipart(client, tmp_path):
+    responses.add(responses.POST, f"{BASE}/sales_invoices/1/attachments.json", json={})
+    f = tmp_path / "a.pdf"
+    f.write_bytes(b"%PDF")
+    client.upload("sales_invoices/1/attachments", str(f))
+    request = responses.calls[0].request
+    assert request.headers["Content-Type"].startswith("multipart/form-data; boundary=")
+    assert b"%PDF" in request.body
+
+
+@responses.activate
+def test_bool_query_params_are_lowercase(client):
+    responses.add(responses.GET, f"{BASE}/users.json", json=[])
+    client.get("users", params={"include_inactive": True})
+    assert responses.calls[0].request.url.endswith("include_inactive=true")

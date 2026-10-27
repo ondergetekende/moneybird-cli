@@ -50,6 +50,18 @@ moneybird <type> update 123456789 --reference "Updated reference"
 moneybird <type> delete 123456789
 ```
 
+### Attachments, notes, payments and sync
+
+```bash
+moneybird receipts attach 123456789 receipt.jpg
+moneybird receipts download-attachment 123456789 <ATTACHMENT_ID> --output receipt.jpg
+moneybird receipts note 123456789 "Ask for VAT invoice"
+moneybird receipts pay 123456789 --amount 12.10 --date 2024-03-15   # purchase-invoices and receipts
+moneybird purchase-invoices sync --filter period:this_year
+```
+
+Notes are not available for typeless documents.
+
 ## Assets
 
 Assets represent significant purchases that are used over multiple years -- company cars, laptops, furniture, etc. Moneybird tracks their value and handles depreciation.
@@ -66,4 +78,14 @@ moneybird assets delete 123456789
 # Reinvestment reserve (herinvesteringsreserve)
 moneybird assets reinvestment-reserve 123456789 purchase --amount 1000
 moneybird assets reinvestment-reserve 123456789 sale --remove
+
+# Depreciation and disposal
+moneybird assets value-change 123456789 manual --date 2024-12-31 --amount -500 --description "Write-down"
+moneybird assets value-change 123456789 full_depreciation --date 2024-12-31 --description "Broken"
+moneybird assets value-change 123456789 retroactive_linear
+moneybird assets dispose 123456789 --date 2025-01-15 --reason sold
+
+# Link the purchase document line as the asset's source
+moneybird assets add-source 123456789 --detail-id 456
+moneybird assets delete-source 123456789 <SOURCE_ID>
 ```

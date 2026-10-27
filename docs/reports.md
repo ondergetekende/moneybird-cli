@@ -80,6 +80,14 @@ moneybird reports get journal_entries --period this_month
 moneybird reports get subscriptions
 moneybird reports get assets
 
-# A single ledger account
-moneybird reports ledger-account 123456789 --period this_month
+```
+
+## Exports
+
+Auditfile (XAF), brugstaat and ledger account exports are generated in the background. Start one, then fetch it from downloads:
+
+```bash
+moneybird reports export auditfile --year 2024 --version 4.0
+moneybird downloads list --type auditfile
+moneybird downloads get <DOWNLOAD_ID> --output auditfile-2024.xaf
 ```

@@ -6,6 +6,15 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import (
+    add_attachments,
+    add_collection_states,
+    add_notes,
+    add_payments,
+    add_sync,
+    clean,
+    save_download,
+)
 
 LIST_COLUMNS = [
     "id",
@@ -150,38 +159,74 @@ def send_invoice(ctx: Context, id: str, delivery_method: str, email_address: str
     echo_output(data, fmt=ctx.output_format)
 
 
-@sales_invoices.command("pay")
-@click.argument("id")
-@click.option("--amount", required=True, help="Payment amount.")
-@click.option("--date", "payment_date", required=True, help="Payment date (YYYY-MM-DD).")
-@click.option("--financial-account-id", help="Financial account ID.")
-@pass_context
-def pay_invoice(ctx: Context, id: str, amount: str, payment_date: str, financial_account_id: str | None) -> None:
-    """Register a payment for a sales invoice."""
-    client = ctx.get_client()
-    payment: dict = {
-        "payment_date": payment_date,
-        "price": amount,
-    }
-    if financial_account_id:
-        payment["financial_account_id"] = financial_account_id
-    data = client.patch(f"sales_invoices/{id}/register_payment", json={"payment": payment})
-    echo_output(data, fmt=ctx.output_format)
-
-
 @sales_invoices.command("pdf")
 @click.argument("id")
 @click.option("--output", "output_path", type=click.Path(), default=None, help="Output file path.")
+@click.option("--packing-slip", is_flag=True, help="Download the packing slip instead of the invoice.")
 @pass_context
-def download_pdf(ctx: Context, id: str, output_path: str | None) -> None:
-    """Download a sales invoice as PDF."""
-    client = ctx.get_client()
-    content = client.download(f"sales_invoices/{id}/download_pdf")
-    path = output_path or f"invoice-{id}.pdf"
-    with open(path, "wb") as f:
-        f.write(content)
-    if not ctx.quiet:
-        click.echo(f"PDF saved to {path}")
+def download_pdf(ctx: Context, id: str, output_path: str | None, packing_slip: bool) -> None:
+    """Download a sales invoice (or its packing slip) as PDF."""
+    endpoint = "download_packing_slip_pdf" if packing_slip else "download_pdf"
+    default = f"packing-slip-{id}.pdf" if packing_slip else f"invoice-{id}.pdf"
+    save_download(ctx, ctx.get_client(), f"sales_invoices/{id}/{endpoint}", output_path or default)
+
+
+@sales_invoices.command("ubl")
+@click.argument("id")
+@click.option("--output", "output_path", type=click.Path(), default=None, help="Output file path.")
+@pass_context
+def download_ubl(ctx: Context, id: str, output_path: str | None) -> None:
+    """Download a sales invoice as UBL (XML)."""
+    save_download(ctx, ctx.get_client(), f"sales_invoices/{id}/download_ubl", output_path or f"invoice-{id}.xml")
+
+
+@sales_invoices.command("find-by-reference")
+@click.argument("reference")
+@pass_context
+def find_by_reference(ctx: Context, reference: str) -> None:
+    """Find a sales invoice by its reference."""
+    echo_output(ctx.get_client().get(f"sales_invoices/find_by_reference/{reference}"), fmt=ctx.output_format)
+
+
+@sales_invoices.command("send-reminder")
+@click.option("--contact-id", required=True, help="Contact ID.")
+@click.option("--invoice-id", "sales_invoice_ids", required=True, multiple=True, help="Sales invoice ID (can be repeated).")
+@click.option("--workflow-id", required=True, help="Workflow ID.")
+@click.option("--document-style-id", required=True, help="Document style ID.")
+@click.option("--identity-id", required=True, help="Identity ID.")
+@click.option("--reminder-text", help="Reminder text.")
+@click.option("--delivery-method", type=click.Choice(["Email", "Manual"]), help="Delivery method.")
+@click.option("--email-address", help="Override recipient email.")
+@pass_context
+def send_reminder(ctx: Context, sales_invoice_ids: tuple[str, ...], **kwargs: str | None) -> None:
+    """Send a payment reminder for one or more invoices of a contact."""
+    reminder = {**clean(kwargs), "sales_invoice_ids": list(sales_invoice_ids)}
+    data = ctx.get_client().post("sales_invoices/send_reminders", json={"sales_invoice_reminders": [reminder]})
+    echo_output(data, fmt=ctx.output_format)
+
+
+@sales_invoices.command("pause")
+@click.argument("id")
+@pass_context
+def pause_invoice(ctx: Context, id: str) -> None:
+    """Pause the payment workflow (reminders) of a sales invoice."""
+    echo_output(ctx.get_client().post(f"sales_invoices/{id}/pause"), fmt=ctx.output_format)
+
+
+@sales_invoices.command("resume")
+@click.argument("id")
+@pass_context
+def resume_invoice(ctx: Context, id: str) -> None:
+    """Resume the payment workflow of a paused sales invoice."""
+    echo_output(ctx.get_client().post(f"sales_invoices/{id}/resume"), fmt=ctx.output_format)
+
+
+@sales_invoices.command("pay-credit")
+@click.argument("id")
+@pass_context
+def pay_credit_invoice(ctx: Context, id: str) -> None:
+    """Register a payment for a credit invoice (settles it against the original)."""
+    echo_output(ctx.get_client().patch(f"sales_invoices/{id}/register_payment_creditinvoice"), fmt=ctx.output_format)
 
 
 @sales_invoices.command("credit")
@@ -192,3 +237,10 @@ def credit_invoice(ctx: Context, id: str) -> None:
     client = ctx.get_client()
     data = client.patch(f"sales_invoices/{id}/duplicate_creditinvoice")
     echo_output(data, fmt=ctx.output_format)
+
+
+add_sync(sales_invoices, "sales_invoices", LIST_COLUMNS)
+add_payments(sales_invoices, "sales_invoices")
+add_notes(sales_invoices, "sales_invoices")
+add_attachments(sales_invoices, "sales_invoices")
+add_collection_states(sales_invoices, "sales_invoices")

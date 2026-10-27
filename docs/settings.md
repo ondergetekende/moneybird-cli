@@ -78,3 +78,29 @@ moneybird task-lists templates create --name "Quarterly close"
 moneybird task-lists templates add-group 321 --name "VAT"
 moneybird task-lists templates instantiate 321 --period-begin 2026-04-01 --period-end 2026-06-30
 ```
+
+## Identities
+
+Identities are the company details (name, address, bank account) shown on your invoices. Without an ID, `get` and `update` use the default identity.
+
+```bash
+moneybird identities list
+moneybird identities get
+moneybird identities update --tax-number NL001234567B01
+moneybird identities create --company-name "Acme Labs" --address1 "Main St 1" --zipcode 1234AB \
+  --city Amsterdam --country NL --email info@acme-labs.com
+moneybird identities delete 123456789
+```
+
+## Lookups
+
+IDs you need for other commands (workflows, document styles, users):
+
+```bash
+moneybird workflows list
+moneybird workflows get 123456789
+moneybird document-styles
+moneybird custom-fields
+moneybird users --include-inactive
+moneybird verifications
+```

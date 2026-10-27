@@ -170,6 +170,15 @@ from moneybird_cli.commands.recurring_sales_invoices import recurring_sales_invo
 from moneybird_cli.commands.subscriptions import subscriptions  # noqa: E402
 from moneybird_cli.commands.tax_rates import tax_rates  # noqa: E402
 from moneybird_cli.commands.task_lists import task_lists  # noqa: E402
+from moneybird_cli.commands.administration import (  # noqa: E402
+    custom_fields,
+    document_styles,
+    downloads,
+    identities,
+    users,
+    verifications,
+    workflows,
+)
 from moneybird_cli.commands.webhooks import webhooks  # noqa: E402
 
 cli.add_command(login)
@@ -199,4 +208,11 @@ cli.add_command(recurring_sales_invoices)
 cli.add_command(subscriptions)
 cli.add_command(tax_rates)
 cli.add_command(task_lists)
+cli.add_command(custom_fields)
+cli.add_command(document_styles)
+cli.add_command(downloads)
+cli.add_command(identities)
+cli.add_command(users)
+cli.add_command(verifications)
+cli.add_command(workflows)
 cli.add_command(webhooks)

@@ -6,6 +6,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import add_attachments, add_notes, add_sync, save_download
 
 LIST_COLUMNS = [
     "id",
@@ -125,3 +126,42 @@ def send_estimate(ctx: Context, id: str, delivery_method: str, email_address: st
         body["email_message"] = email_message
     data = client.patch(f"estimates/{id}/send_estimate", json={"estimate_sending": body})
     echo_output(data, fmt=ctx.output_format)
+
+
+@estimates.command("find")
+@click.argument("estimate_id")
+@pass_context
+def find_estimate(ctx: Context, estimate_id: str) -> None:
+    """Find an estimate by its estimate number."""
+    echo_output(ctx.get_client().get(f"estimates/find_by_estimate_id/{estimate_id}"), fmt=ctx.output_format)
+
+
+@estimates.command("bill")
+@click.argument("id")
+@pass_context
+def bill_estimate(ctx: Context, id: str) -> None:
+    """Convert an estimate into a sales invoice."""
+    echo_output(ctx.get_client().patch(f"estimates/{id}/bill_estimate"), fmt=ctx.output_format)
+
+
+@estimates.command("change-state")
+@click.argument("id")
+@click.argument("state", type=click.Choice(["accepted", "rejected", "open", "late", "billed", "archived"]))
+@pass_context
+def change_state(ctx: Context, id: str, state: str) -> None:
+    """Change the state of an estimate."""
+    echo_output(ctx.get_client().patch(f"estimates/{id}/change_state", json={"state": state}), fmt=ctx.output_format)
+
+
+@estimates.command("pdf")
+@click.argument("id")
+@click.option("--output", "output_path", type=click.Path(), default=None, help="Output file path.")
+@pass_context
+def download_pdf(ctx: Context, id: str, output_path: str | None) -> None:
+    """Download an estimate as PDF."""
+    save_download(ctx, ctx.get_client(), f"estimates/{id}/download_pdf", output_path or f"estimate-{id}.pdf")
+
+
+add_sync(estimates, "estimates", LIST_COLUMNS)
+add_notes(estimates, "estimates")
+add_attachments(estimates, "estimates")

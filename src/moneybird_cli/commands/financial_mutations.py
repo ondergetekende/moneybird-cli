@@ -39,10 +39,7 @@ def list_financial_mutations(ctx: Context, fetch_all: bool, state: str | None, p
         params["filter"] = ",".join(filters)
     if fetch_all:
         # The list endpoint is capped at 100; the synchronization API returns everything.
-        ids = [m["id"] for m in client.get("financial_mutations/synchronization", params=params) or []]
-        data = []
-        for i in range(0, len(ids), 100):
-            data += client.post("financial_mutations/synchronization", json={"ids": ids[i:i + 100]}) or []
+        data = client.sync_all("financial_mutations", params=params)
     else:
         data = client.get("financial_mutations", params=params)
     echo_output(data, fmt=ctx.output_format, columns=LIST_COLUMNS)

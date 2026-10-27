@@ -85,6 +85,12 @@ moneybird contacts list --page 2 --per-page 50
 
 The `--all` flag respects Moneybird's rate limits (150 requests per 5 minutes) and automatically pauses when the limit is nearly exhausted.
 
+Resources with a synchronization API (contacts, sales/external/recurring invoices, estimates, and all document types) also have a `sync` command, which fetches every record by ID instead of page by page, and accepts the same `--filter` terms as the API:
+
+```bash
+moneybird sales-invoices sync --filter period:this_year,state:all
+```
+
 ## Timezone
 
 The CLI sends your system timezone to Moneybird with every request, so dates and times are returned in your local timezone. Override it with:

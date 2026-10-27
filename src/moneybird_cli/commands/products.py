@@ -105,3 +105,13 @@ def delete_product(ctx: Context, id: str) -> None:
     client.delete(f"products/{id}")
     if not ctx.quiet:
         click.echo(f"Product {id} deleted.")
+
+
+@products.command("sales-link")
+@click.argument("id")
+@click.option("--contact-id", help="Pre-fill for this contact.")
+@pass_context
+def sales_link(ctx: Context, id: str, contact_id: str | None) -> None:
+    """Create an online sales link for a product."""
+    params = {"contact_id": contact_id} if contact_id else None
+    echo_output(ctx.get_client().post(f"products/{id}/sales_link", params=params), fmt=ctx.output_format)

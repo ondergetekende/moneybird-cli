@@ -33,6 +33,12 @@ moneybird products delete 123456789
 
 Additional create/update fields: `--description`, `--currency` (default EUR), `--ledger-account-id`, `--identifier` (your SKU/product code).
 
+### Online sales links
+
+```bash
+moneybird products sales-link 123456789 --contact-id 456
+```
+
 ## Subscriptions
 
 Subscriptions represent ongoing service agreements with customers. Moneybird tracks the subscription lifecycle and can automatically generate invoices based on the subscription terms.
@@ -50,6 +56,15 @@ moneybird subscriptions create \
 
 moneybird subscriptions update 123456789 --product-id 789
 moneybird subscriptions cancel 123456789
+
+# Extra charges and one-off invoices billed with the next period
+moneybird subscriptions charges 123456789
+moneybird subscriptions add-charge 123456789 --product-id 456 --amount "3 x" --price 5
+moneybird subscriptions schedule-invoice 123456789 --description "Setup fee" --price 50
+
+# Templates and online sales links
+moneybird subscriptions templates
+moneybird subscriptions template-link <TEMPLATE_ID> --contact-id 123
 ```
 
 **Frequency types:** `day`, `week`, `month`, `quarter`, `year`.

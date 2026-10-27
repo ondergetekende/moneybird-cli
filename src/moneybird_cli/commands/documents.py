@@ -8,6 +8,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import add_attachments, add_notes, add_payments, add_sync
 
 
 def _list_cmd(api_path: str, list_columns: list[str]) -> Callable:
@@ -224,3 +225,18 @@ def create_typeless_document(ctx: Context, **kwargs: str | None) -> None:
     doc = {k: v for k, v in kwargs.items() if v is not None}
     data = client.post("documents/typeless_documents", json={"typeless_document": doc})
     echo_output(data, fmt=ctx.output_format)
+
+
+for _group, _path in [
+    (general_documents, "documents/general_documents"),
+    (general_journal_documents, "documents/general_journal_documents"),
+    (purchase_invoices, "documents/purchase_invoices"),
+    (receipts, "documents/receipts"),
+    (typeless_documents, "documents/typeless_documents"),
+]:
+    add_sync(_group, _path)
+    add_attachments(_group, _path)
+    if _group is not typeless_documents:
+        add_notes(_group, _path)
+    if _group in (purchase_invoices, receipts):
+        add_payments(_group, _path)

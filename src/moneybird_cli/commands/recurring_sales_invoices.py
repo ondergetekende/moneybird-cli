@@ -6,6 +6,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import add_notes, add_sync
 
 LIST_COLUMNS = ["id", "contact_id", "frequency_type", "frequency", "start_date", "last_date", "active"]
 
@@ -88,3 +89,7 @@ def delete_recurring(ctx: Context, id: str) -> None:
     client.delete(f"recurring_sales_invoices/{id}")
     if not ctx.quiet:
         click.echo(f"Recurring sales invoice {id} deleted.")
+
+
+add_sync(recurring_sales_invoices, "recurring_sales_invoices", LIST_COLUMNS)
+add_notes(recurring_sales_invoices, "recurring_sales_invoices")

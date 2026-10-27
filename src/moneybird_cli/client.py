@@ -81,8 +81,12 @@ class MoneybirdClient:
         path: str,
         params: dict | None = None,
         json: dict | None = None,
+        files: dict | None = None,
+        data: dict | None = None,
     ) -> Any:
         url = self._url(path)
+        if params:
+            params = {k: str(v).lower() if isinstance(v, bool) else v for k, v in params.items()}
         if self.verbose:
             click.echo(f"{method.upper()} {url}", err=True)
             if json:
@@ -92,9 +96,13 @@ class MoneybirdClient:
             click.echo(f"[dry-run] {method.upper()} {url}", err=True)
             return None
 
-        response = self.session.request(method, url, params=params, json=json)
-        data, _ = self._handle_response(response)
-        return data
+        # Content-Type None lets requests set the multipart boundary for uploads.
+        headers = {"Content-Type": None} if files else None
+        response = self.session.request(
+            method, url, params=params, json=json, files=files, data=data, headers=headers
+        )
+        result, _ = self._handle_response(response)
+        return result
 
     def _request_with_headers(
         self,
@@ -123,12 +131,12 @@ class MoneybirdClient:
     def get(self, path: str, params: dict | None = None) -> Any:
         return self._request("GET", path, params=params)
 
-    def download(self, path: str) -> bytes:
-        """GET an endpoint that redirects (302) to a file and return its contents."""
+    def download(self, path: str, method: str = "GET") -> bytes:
+        """Fetch a file, following a 302 redirect if the API returns one."""
         url = self._url(path)
         if self.verbose:
-            click.echo(f"GET {url}", err=True)
-        response = self.session.get(url, allow_redirects=False)
+            click.echo(f"{method} {url}", err=True)
+        response = self.session.request(method, url, allow_redirects=False)
         if response.is_redirect:
             # Fetch without our session so the API token isn't sent to the file host.
             response = requests.get(response.headers["Location"])
@@ -179,8 +187,24 @@ class MoneybirdClient:
             page += 1
         return results
 
-    def post(self, path: str, json: dict | None = None) -> Any:
-        return self._request("POST", path, json=json)
+    def post(self, path: str, json: dict | None = None, params: dict | None = None) -> Any:
+        return self._request("POST", path, params=params, json=json)
+
+    def upload(self, path: str, file_path: str, data: dict | None = None) -> Any:
+        """POST a file as multipart/form-data (field name `file`)."""
+        with open(file_path, "rb") as f:
+            return self._request("POST", path, files={"file": f}, data=data)
+
+    def sync_all(self, path: str, params: dict | None = None) -> list[dict]:
+        """Fetch every record via the synchronization API: ids first, then records in batches of 100."""
+        url = self._url(f"{path}/synchronization")
+        ids = [r["id"] for r in self.get(f"{path}/synchronization", params=params) or []]
+        results: list[dict] = []
+        for i in range(0, len(ids), 100):
+            # Direct session call: this POST is a read, so it must also run in dry-run mode.
+            data, _ = self._handle_response(self.session.post(url, json={"ids": ids[i:i + 100]}))
+            results += data or []
+        return results
 
     def patch(self, path: str, json: dict | None = None) -> Any:
         return self._request("PATCH", path, json=json)

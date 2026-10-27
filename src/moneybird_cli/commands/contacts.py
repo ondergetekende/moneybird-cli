@@ -6,6 +6,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import add_additional_charges, add_notes, add_sync, clean
 
 LIST_COLUMNS = ["id", "company_name", "firstname", "lastname", "email"]
 
@@ -169,3 +170,145 @@ def archive_contact(ctx: Context, id: str) -> None:
     client.patch(f"contacts/{id}/archive")
     if not ctx.quiet:
         click.echo(f"Contact {id} archived.")
+
+
+@contacts.command("find")
+@click.argument("customer_id")
+@pass_context
+def find_contact(ctx: Context, customer_id: str) -> None:
+    """Find a contact by its customer ID."""
+    echo_output(ctx.get_client().get(f"contacts/customer_id/{customer_id}"), fmt=ctx.output_format)
+
+
+@contacts.command("portal-link")
+@click.argument("id")
+@click.option("--invoices", is_flag=True, help="Link to the invoices page.")
+@click.option("--subscription-id", help="Link to this subscription.")
+@pass_context
+def portal_link(ctx: Context, id: str, invoices: bool, subscription_id: str | None) -> None:
+    """Get a temporary link to the customer portal of a contact."""
+    path = f"customer_contact_portal/{id}"
+    if subscription_id:
+        path += f"/subscriptions/{subscription_id}"
+    elif invoices:
+        path += "/invoices"
+    echo_output(ctx.get_client().get(path), fmt=ctx.output_format)
+
+
+# --- Contact people ---
+
+PERSON_OPTIONS = [
+    click.option("--firstname", help="First name."),
+    click.option("--lastname", help="Last name."),
+    click.option("--phone", help="Phone number."),
+    click.option("--email", help="Email address."),
+    click.option("--department", help="Department."),
+]
+
+
+def _person_options(f):
+    for option in reversed(PERSON_OPTIONS):
+        f = option(f)
+    return f
+
+
+@contacts.group("people")
+def people() -> None:
+    """Manage contact people of a contact."""
+
+
+@people.command("get")
+@click.argument("contact_id")
+@click.argument("id")
+@pass_context
+def get_person(ctx: Context, contact_id: str, id: str) -> None:
+    """Get a contact person."""
+    echo_output(ctx.get_client().get(f"contacts/{contact_id}/contact_people/{id}"), fmt=ctx.output_format)
+
+
+@people.command("create")
+@click.argument("contact_id")
+@_person_options
+@pass_context
+def create_person(ctx: Context, contact_id: str, **kwargs: str | None) -> None:
+    """Add a contact person to a contact."""
+    data = ctx.get_client().post(f"contacts/{contact_id}/contact_people", json={"contact_person": clean(kwargs)})
+    echo_output(data, fmt=ctx.output_format)
+
+
+@people.command("update")
+@click.argument("contact_id")
+@click.argument("id")
+@_person_options
+@pass_context
+def update_person(ctx: Context, contact_id: str, id: str, **kwargs: str | None) -> None:
+    """Update a contact person."""
+    data = ctx.get_client().patch(f"contacts/{contact_id}/contact_people/{id}", json={"contact_person": clean(kwargs)})
+    echo_output(data, fmt=ctx.output_format)
+
+
+@people.command("delete")
+@click.argument("contact_id")
+@click.argument("id")
+@click.confirmation_option(prompt="Are you sure you want to delete this contact person?")
+@pass_context
+def delete_person(ctx: Context, contact_id: str, id: str) -> None:
+    """Delete a contact person."""
+    ctx.get_client().delete(f"contacts/{contact_id}/contact_people/{id}")
+    if not ctx.quiet:
+        click.echo(f"Contact person {id} deleted.")
+
+
+# --- Moneybird Payments mandate ---
+
+@contacts.group("mandate")
+def mandate() -> None:
+    """Manage the Moneybird Payments direct-debit mandate of a contact."""
+
+
+@mandate.command("get")
+@click.argument("contact_id")
+@pass_context
+def get_mandate(ctx: Context, contact_id: str) -> None:
+    """Show the mandate of a contact."""
+    echo_output(ctx.get_client().get(f"contacts/{contact_id}/moneybird_payments_mandate"), fmt=ctx.output_format)
+
+
+@mandate.command("request")
+@click.argument("contact_id")
+@click.option("--email-message", help="Custom email message.")
+@click.option("--identity-id", help="Identity ID.")
+@click.option("--workflow-id", help="Workflow ID.")
+@pass_context
+def request_mandate(ctx: Context, contact_id: str, **kwargs: str | None) -> None:
+    """Email the contact a request to set up a mandate."""
+    ctx.get_client().post(f"contacts/{contact_id}/moneybird_payments_mandate", json={"mandate_request": clean(kwargs)})
+    if not ctx.quiet:
+        click.echo("Mandate requested.")
+
+
+@mandate.command("url")
+@click.argument("contact_id")
+@click.option("--identity-id", help="Identity ID.")
+@click.option("--workflow-id", help="Workflow ID.")
+@pass_context
+def mandate_url(ctx: Context, contact_id: str, **kwargs: str | None) -> None:
+    """Get a URL where the contact can set up a mandate."""
+    data = ctx.get_client().post(f"contacts/{contact_id}/moneybird_payments_mandate/url", json={"mandate_request": clean(kwargs)})
+    echo_output(data, fmt=ctx.output_format)
+
+
+@mandate.command("delete")
+@click.argument("contact_id")
+@click.confirmation_option(prompt="Are you sure you want to delete this mandate?")
+@pass_context
+def delete_mandate(ctx: Context, contact_id: str) -> None:
+    """Delete the mandate of a contact."""
+    ctx.get_client().delete(f"contacts/{contact_id}/moneybird_payments_mandate")
+    if not ctx.quiet:
+        click.echo("Mandate deleted.")
+
+
+add_sync(contacts, "contacts", LIST_COLUMNS)
+add_notes(contacts, "contacts")
+add_additional_charges(contacts, "contacts")

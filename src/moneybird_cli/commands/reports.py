@@ -55,15 +55,14 @@ def get_report(ctx: Context, report_type: str, **kwargs: str | int | None) -> No
     echo_output(data, fmt=ctx.output_format)
 
 
-@reports.command("ledger-account")
-@click.argument("ledger_account_id")
-@click.option("--period", help="Period (e.g., this_month, prev_year, 202401..202412).")
-@click.option("--page", type=int, help="Page number.")
-@click.option("--per-page", type=int, help="Results per page.")
+@reports.command("export")
+@click.argument("export_type", type=click.Choice(["auditfile", "brugstaat", "ledger_accounts"]))
+@click.option("--year", required=True, help="Year to export.")
+@click.option("--version", type=click.Choice(["3.2", "4.0"]), help="XAF version (auditfile only).")
 @pass_context
-def get_ledger_account_report(ctx: Context, ledger_account_id: str, **kwargs: str | int | None) -> None:
-    """Fetch the report for a single ledger account."""
-    client = ctx.get_client()
-    params = {k: v for k, v in kwargs.items() if v is not None}
-    data = client.get(f"reports/ledger_accounts/{ledger_account_id}", params=params)
-    echo_output(data, fmt=ctx.output_format)
+def export_report(ctx: Context, export_type: str, year: str, version: str | None) -> None:
+    """Start an export. The result appears in 'moneybird downloads list' when ready."""
+    body = {"year": year, **({"version": version} if version else {})}
+    ctx.get_client().post(f"reports/export/{export_type}", json=body)
+    if not ctx.quiet:
+        click.echo("Export started; check 'moneybird downloads list'.")

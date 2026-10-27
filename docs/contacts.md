@@ -68,3 +68,36 @@ Archiving hides a contact from default lists without deleting it and its associa
 ```bash
 moneybird contacts archive 123456789
 ```
+
+## Finding by customer ID
+
+```bash
+moneybird contacts find C-0042
+```
+
+## Contact people
+
+```bash
+moneybird contacts people create 123456789 --firstname Piet --lastname Jansen --email piet@acme.com
+moneybird contacts people get 123456789 <PERSON_ID>
+moneybird contacts people update 123456789 <PERSON_ID> --phone 0612345678
+moneybird contacts people delete 123456789 <PERSON_ID>
+```
+
+## Notes, charges and portal
+
+```bash
+moneybird contacts note 123456789 "Prefers invoices in English"
+moneybird contacts charges 123456789
+moneybird contacts add-charge 123456789 --product-id 456 --amount "5 x" --price 10 --period 20240601..20240630
+moneybird contacts portal-link 123456789 --invoices
+```
+
+## Moneybird Payments mandate
+
+```bash
+moneybird contacts mandate get 123456789
+moneybird contacts mandate request 123456789      # emails the contact
+moneybird contacts mandate url 123456789          # link to share yourself
+moneybird contacts mandate delete 123456789
+```

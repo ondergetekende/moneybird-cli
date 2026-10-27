@@ -6,6 +6,7 @@ import click
 
 from moneybird_cli.main import pass_context, Context
 from moneybird_cli.output import echo_output
+from moneybird_cli.commands._common import add_notes
 
 LIST_COLUMNS = ["id", "contact_id", "project_id", "started_at", "ended_at", "description", "billable"]
 
@@ -124,3 +125,6 @@ def resume_time_entry(ctx: Context, id: str) -> None:
     client = ctx.get_client()
     data = client.patch(f"time_entries/{id}/resume")
     echo_output(data, fmt=ctx.output_format)
+
+
+add_notes(time_entries, "time_entries")
