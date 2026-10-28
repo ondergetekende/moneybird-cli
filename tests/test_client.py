@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+import requests
 import responses
 
 from moneybird_cli.client import MoneybirdApiError, MoneybirdClient
@@ -157,6 +158,76 @@ def test_get_all_no_pause_when_remaining_high(client, monkeypatch):
     result = client.get_all("contacts")
     assert len(result) == 101
     assert slept == []
+
+
+@pytest.mark.parametrize(
+    ("retry_after", "expected"),
+    [
+        ("1793177400", 227),
+        ("Wed, 28 Oct 2026 08:50:00 GMT", 227),
+        ("5", 5),
+        ("1793177000", 0),
+        ("invalid", 60),
+        ("-1", 60),
+        (None, 60),
+    ],
+)
+@responses.activate
+def test_retry_after_delay(client, monkeypatch, retry_after, expected):
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.time", lambda: 1793177173)
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", slept.append)
+    headers = {} if retry_after is None else {"Retry-After": retry_after}
+    responses.add(responses.GET, f"{BASE}/contacts.json", status=429, headers=headers)
+    responses.add(responses.GET, f"{BASE}/contacts.json", json={"ok": True})
+
+    assert client.get("contacts") == {"ok": True}
+    assert slept == [expected]
+    assert len(responses.calls) == 2
+
+
+def test_rate_limit_reset_timestamp(monkeypatch):
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.time", lambda: 1793177173)
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", slept.append)
+    response = requests.Response()
+    response.headers.update({"RateLimit-Remaining": "1", "RateLimit-Reset": "1793177400"})
+
+    MoneybirdClient._respect_rate_limit(response)
+    assert slept == [227]
+
+
+@responses.activate
+def test_download_retries_rate_limited_binary_response(client, monkeypatch):
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", slept.append)
+    responses.add(responses.GET, f"{BASE}/file.json", status=429, headers={"Retry-After": "5"})
+    responses.add(responses.GET, f"{BASE}/file.json", body=b"%PDF-1.0")
+
+    assert client.download("file") == b"%PDF-1.0"
+    assert slept == [5]
+    assert len(responses.calls) == 2
+
+
+@responses.activate
+def test_download_retries_rate_limited_redirect(client, monkeypatch):
+    slept = []
+    monkeypatch.setattr("moneybird_cli.client.time.sleep", slept.append)
+    responses.add(responses.GET, f"{BASE}/file.json", status=429, headers={"Retry-After": "5"})
+    responses.add(
+        responses.GET, f"{BASE}/file.json", status=302,
+        headers={"Location": "https://files.example.com/file.pdf"},
+    )
+    responses.add(
+        responses.GET, "https://files.example.com/file.pdf", status=429,
+        headers={"Retry-After": "5"},
+    )
+    responses.add(responses.GET, "https://files.example.com/file.pdf", body=b"%PDF-1.0")
+
+    assert client.download("file") == b"%PDF-1.0"
+    assert slept == [5, 5]
+    assert len(responses.calls) == 4
+    assert all("Authorization" not in call.request.headers for call in responses.calls[2:])
 
 
 @responses.activate

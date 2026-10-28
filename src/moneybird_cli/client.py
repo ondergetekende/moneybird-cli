@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 
 import click
@@ -12,6 +15,28 @@ import requests
 logger = logging.getLogger(__name__)
 
 API_BASE = "https://moneybird.com/api/v2"
+
+
+def _rate_limit_delay(value: str | None) -> int:
+    if value is None:
+        return 60
+    try:
+        seconds = int(value)
+    except ValueError:
+        try:
+            date = parsedate_to_datetime(value)
+            if date.tzinfo is None:
+                date = date.replace(tzinfo=timezone.utc)
+            timestamp = date.timestamp()
+        except (TypeError, ValueError, OverflowError):
+            return 60
+    else:
+        if seconds < 0:
+            return 60
+        if seconds < 1_000_000_000:
+            return seconds
+        timestamp = seconds
+    return max(0, math.ceil(timestamp - time.time()))
 
 
 class MoneybirdApiError(click.ClickException):
@@ -51,14 +76,20 @@ class MoneybirdClient:
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path}.json"
 
-    def _handle_response(self, response: requests.Response) -> tuple[Any, requests.Response]:
-        if response.status_code == 429:
-            retry_after = int(response.headers.get("Retry-After", "60"))
+    def _retry_rate_limited(
+        self, response: requests.Response, allow_redirects: bool = True
+    ) -> requests.Response:
+        while response.status_code == 429:
+            retry_after = _rate_limit_delay(response.headers.get("Retry-After"))
             logger.warning("Rate limited. Retrying after %d seconds.", retry_after)
             time.sleep(retry_after)
-            return self._handle_response(
-                self.session.send(response.request)  # type: ignore[arg-type]
+            response = self.session.send(
+                response.request, allow_redirects=allow_redirects  # type: ignore[arg-type]
             )
+        return response
+
+    def _handle_response(self, response: requests.Response) -> tuple[Any, requests.Response]:
+        response = self._retry_rate_limited(response)
 
         if response.status_code == 204:
             return None, response
@@ -123,7 +154,7 @@ class MoneybirdClient:
         """Sleep if rate limit is nearly exhausted."""
         remaining = response.headers.get("RateLimit-Remaining")
         if remaining is not None and int(remaining) <= 1:
-            reset = int(response.headers.get("RateLimit-Reset", "60"))
+            reset = _rate_limit_delay(response.headers.get("RateLimit-Reset"))
             if verbose:
                 click.echo(f"Rate limit nearly exhausted, waiting {reset}s.", err=True)
             time.sleep(reset)
@@ -136,10 +167,12 @@ class MoneybirdClient:
         url = self._url(path)
         if self.verbose:
             click.echo(f"{method} {url}", err=True)
-        response = self.session.request(method, url, allow_redirects=False)
+        response = self._retry_rate_limited(
+            self.session.request(method, url, allow_redirects=False), allow_redirects=False
+        )
         if response.is_redirect:
             # Fetch without our session so the API token isn't sent to the file host.
-            response = requests.get(response.headers["Location"])
+            response = self._retry_rate_limited(requests.get(response.headers["Location"]))
         if response.status_code >= 400:
             self._handle_response(response)
         return response.content
