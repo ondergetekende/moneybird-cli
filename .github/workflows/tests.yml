@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_call:
+
+jobs:
+  tox:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        dependencies: [min, latest]
+        include:
+          - python: "3.8"
+            dependencies: min-devmin
+          - python: "3.8"
+            dependencies: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install "${{ matrix.python }}"
+      - name: Run tox
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
+          DEPENDENCIES: ${{ matrix.dependencies }}
+        run: uvx --from tox --with tox-uv tox -e "py${PYTHON_VERSION//./}-${DEPENDENCIES}"

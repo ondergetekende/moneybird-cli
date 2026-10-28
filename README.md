@@ -31,10 +31,16 @@ See [Getting Started](docs/getting-started.md) for full setup instructions, outp
 
 ## Tech stack
 
-- [Python](https://www.python.org/) >= 3.11
+- [Python](https://www.python.org/) >= 3.8
 - [Click](https://click.palletsprojects.com/) for the CLI framework
 - [Requests](https://requests.readthedocs.io/) for HTTP
 - [Tabulate](https://pypi.org/project/tabulate/) for table formatting
+
+## Testing
+
+Install tox with `python -m pip install 'tox>=4'`, then run `tox` with Python 3.8 through 3.14 available. The matrix tests minimum and current runtime dependencies on each Python version, plus minimum development dependencies and package building on Python 3.8. Run an individual environment with `tox -e py38-min`.
+
+Keep the minimum dependency pins in `tox.ini` in sync with `pyproject.toml` when changing dependency requirements.
 
 ## Releasing
 

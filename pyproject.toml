@@ -7,8 +7,8 @@ name = "moneybird-cli"
 dynamic = ["version"]
 description = "Command-line interface for the Moneybird API"
 readme = "README.md"
-requires-python = ">=3.11"
-license = "MIT"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
 keywords = ["moneybird", "accounting", "cli", "invoicing", "bookkeeping"]
 authors = [
     { name = "Koert van der Veer", email = "koert@ondergetekende.nl" },
@@ -19,15 +19,20 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial :: Accounting",
 ]
 dependencies = [
     "click>=8.1",
     "requests>=2.31",
     "tabulate>=0.9",
+    "tomli>=1.1.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
