@@ -31,6 +31,7 @@ def _default_timezone() -> str:
 from moneybird_cli.client import MoneybirdClient
 from moneybird_cli.config import (
     DEFAULT_CONFIG_PATH,
+    complete_administration,
     get_administration,
     load_config,
 )
@@ -90,6 +91,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 @click.option(
     "--administration",
     metavar="NAME",
+    shell_complete=complete_administration,
     help="Administration name to use (from config).",
 )
 @click.option("--token", metavar="TOKEN", help="API token for authentication.")
@@ -140,6 +142,22 @@ def cli(
         ctx.config_path = config_path
     if timezone:
         ctx.timezone = timezone
+
+
+@cli.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+def completion(shell: str) -> None:
+    """Print the shell completion script for SHELL.
+
+    \b
+    bash: moneybird completion bash > ~/.local/share/bash-completion/completions/moneybird
+    zsh:  moneybird completion zsh > "${fpath[1]}/_moneybird"
+    fish: moneybird completion fish > ~/.config/fish/completions/moneybird.fish
+    """
+    from click.shell_completion import get_completion_class
+
+    comp_cls = get_completion_class(shell)
+    click.echo(comp_cls(cli, {}, "moneybird", "_MONEYBIRD_COMPLETE").source())
 
 
 # Register command groups

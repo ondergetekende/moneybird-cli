@@ -14,6 +14,21 @@ pip install moneybird-cli
 
 This installs a `moneybird` command in your PATH.
 
+### Shell completion
+
+Generate a completion script for your shell and install it:
+
+```bash
+# bash
+moneybird completion bash > ~/.local/share/bash-completion/completions/moneybird
+# zsh (pick a directory in your $fpath)
+moneybird completion zsh > "${fpath[1]}/_moneybird"
+# fish
+moneybird completion fish > ~/.config/fish/completions/moneybird.fish
+```
+
+Restart your shell afterwards. Administration names from your config are completed too.
+
 ## Authentication
 
 You need a personal API token from Moneybird:

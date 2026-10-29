@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 
 from moneybird_cli.client import MoneybirdClient
-from moneybird_cli.config import load_config, save_config, set_administration, remove_administration
+from moneybird_cli.config import complete_administration, load_config, save_config, set_administration, remove_administration
 from moneybird_cli.main import pass_context, Context
 
 
@@ -51,7 +51,7 @@ def logout(ctx: Context) -> None:
 
 
 @click.command(name="default")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_administration)
 @pass_context
 def set_default(ctx: Context, name: str) -> None:
     """Set the default administration.

@@ -81,6 +81,16 @@ def save_config(data: dict, path: Path | None = None) -> None:
     config_path.write_text(_serialize_toml(data) + "\n")
 
 
+def complete_administration(ctx, param, incomplete: str) -> list[str]:
+    """Shell completion callback for administration names."""
+    config_path = ctx.find_root().params.get("config_path")
+    try:
+        admins = load_config(config_path).get("administrations", {})
+    except Exception:
+        return []
+    return [name for name in admins if name.startswith(incomplete)]
+
+
 def get_administration(config: dict, name: str | None = None) -> dict:
     """Get credentials for a named administration.
 
